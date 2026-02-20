@@ -92,7 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self, let button = self.statusItem?.button else { return }
                 if isProcessing {
                     button.title = " Polishing..."
-                    if let img = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Processing") {
+                    if let img = NSImage(systemSymbolName: "wand.and.rays", accessibilityDescription: "Processing") {
                         img.size = NSSize(width: 18, height: 18)
                         img.isTemplate = true
                         button.image = img
@@ -177,13 +177,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        let outputTitle = settingsManager.autoReplace ? "Mode: Auto-replace" : "Mode: Clipboard + Notification"
-        let outputItem = NSMenuItem(title: outputTitle, action: #selector(toggleOutputMode), keyEquivalent: "")
-        outputItem.target = self
-        menu.addItem(outputItem)
-
-        menu.addItem(NSMenuItem.separator())
-
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
@@ -196,11 +189,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.delegate = self
         statusItem.menu = menu
-    }
-
-    @objc private func toggleOutputMode() {
-        settingsManager.autoReplace.toggle()
-        setupStatusItem()
     }
 
     @objc private func openSettings() {
@@ -274,13 +262,6 @@ extension AppDelegate {
         let modelItem = NSMenuItem(title: "Model: \(settingsManager.selectedModel)", action: nil, keyEquivalent: "")
         modelItem.isEnabled = false
         menu.addItem(modelItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let outputTitle = settingsManager.autoReplace ? "Mode: Auto-replace" : "Mode: Clipboard + Notification"
-        let outputItem = NSMenuItem(title: outputTitle, action: #selector(toggleOutputMode), keyEquivalent: "")
-        outputItem.target = self
-        menu.addItem(outputItem)
 
         menu.addItem(NSMenuItem.separator())
 

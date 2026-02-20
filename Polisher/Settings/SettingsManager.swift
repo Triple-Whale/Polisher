@@ -13,10 +13,6 @@ class SettingsManager: ObservableObject {
         didSet { UserDefaults.standard.set(selectedModel, forKey: "selectedModel") }
     }
 
-    @Published var autoReplace: Bool {
-        didSet { UserDefaults.standard.set(autoReplace, forKey: "autoReplace") }
-    }
-
     @Published var launchAtLogin: Bool {
         didSet { UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin") }
     }
@@ -70,7 +66,6 @@ class SettingsManager: ObservableObject {
         case .gemini: validModels = ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
         }
         self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
-        self.autoReplace = UserDefaults.standard.bool(forKey: "autoReplace")
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
 
         let hotKeyDefault = UserDefaults.standard.object(forKey: "hotKeyEnabled")
