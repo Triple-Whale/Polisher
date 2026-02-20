@@ -6,7 +6,6 @@ class GlobalHotKey {
     private let settingsManager: SettingsManager
     private let notificationManager: NotificationManager
     private let historyManager: HistoryManager
-    private let textReplacer = TextReplacer()
     private let clipboardManager = ClipboardManager()
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
@@ -66,17 +65,17 @@ class GlobalHotKey {
             return
         }
 
-        log.log(.info, category: "HotKey", "Shortcut triggered, capturing text...")
+        log.log(.info, category: "HotKey", "Shortcut triggered, reading clipboard...")
 
-        guard let selectedText = textReplacer.captureSelectedText(), !selectedText.isEmpty else {
-            log.log(.error, category: "Capture", "No text selected")
-            notificationManager.showMenuBarMessage("No text selected")
+        guard let clipboardText = clipboardManager.getText(), !clipboardText.isEmpty else {
+            log.log(.error, category: "Capture", "Clipboard is empty")
+            notificationManager.showMenuBarMessage("Clipboard is empty")
             return
         }
 
-        let charCount = selectedText.count
-        let preview = String(selectedText.prefix(80)).replacingOccurrences(of: "\n", with: " ")
-        log.log(.info, category: "Capture", "Captured \(charCount) chars: \"\(preview)\(charCount > 80 ? "..." : "")\"")
+        let charCount = clipboardText.count
+        let preview = String(clipboardText.prefix(80)).replacingOccurrences(of: "\n", with: " ")
+        log.log(.info, category: "Capture", "Read \(charCount) chars: \"\(preview)\(charCount > 80 ? "..." : "")\"")
 
         let provider = settingsManager.selectedProvider.rawValue
         let model = settingsManager.selectedModel
@@ -87,23 +86,15 @@ class GlobalHotKey {
 
         Task {
             do {
-                let improved = try await aiManager.improveText(selectedText)
+                let improved = try await aiManager.improveText(clipboardText)
                 let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
                 log.log(.success, category: "API", "Response received in \(elapsed) (\(improved.count) chars)")
 
                 await MainActor.run {
-                    history.addEntry(original: selectedText, improved: improved)
-                    log.log(.debug, category: "History", "Entry saved")
-
-                    if settingsManager.autoReplace {
-                        textReplacer.replaceSelectedText(with: improved)
-                        log.log(.success, category: "Output", "Text replaced in-place")
-                        notificationManager.showMenuBarMessage("Text replaced!")
-                    } else {
-                        clipboardManager.setText(improved)
-                        log.log(.success, category: "Output", "Copied to clipboard (\(improved.count) chars)")
-                        notificationManager.showMenuBarMessage("Copied to clipboard!")
-                    }
+                    history.addEntry(original: clipboardText, improved: improved)
+                    clipboardManager.setText(improved)
+                    log.log(.success, category: "Output", "Copied to clipboard (\(improved.count) chars)")
+                    notificationManager.showMenuBarMessage("Done! Paste to use.")
                 }
             } catch {
                 let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))

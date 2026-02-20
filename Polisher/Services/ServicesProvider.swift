@@ -6,7 +6,6 @@ class ServicesProvider: NSObject {
     private let notificationManager: NotificationManager
     private let historyManager: HistoryManager
     private let clipboardManager = ClipboardManager()
-    private let textReplacer = TextReplacer()
 
     init(aiManager: AIManager, settingsManager: SettingsManager, notificationManager: NotificationManager, historyManager: HistoryManager) {
         self.aiManager = aiManager
@@ -17,33 +16,23 @@ class ServicesProvider: NSObject {
 
     @objc func improveText(_ pboard: NSPasteboard, userData: String, error: AutoreleasingUnsafeMutablePointer<NSString>) {
         guard let text = pboard.string(forType: .string), !text.isEmpty else {
-            error.pointee = "No text selected" as NSString
+            error.pointee = "No text on clipboard" as NSString
             return
         }
 
-        let autoReplace = settingsManager.autoReplace
-        let clipboard = clipboardManager
         let notifications = notificationManager
         let ai = aiManager
         let history = historyManager
+        let clipboard = clipboardManager
 
         Task { @MainActor in
             do {
                 let improved = try await ai.improveText(text)
                 history.addEntry(original: text, improved: improved)
-
-                if autoReplace {
-                    pboard.clearContents()
-                    pboard.setString(improved, forType: .string)
-                } else {
-                    clipboard.setText(improved)
-                    notifications.notifySuccess(
-                        originalLength: text.count,
-                        improvedLength: improved.count
-                    )
-                }
+                clipboard.setText(improved)
+                notifications.showMenuBarMessage("Done! Paste to use.")
             } catch {
-                notifications.notifyError(error)
+                notifications.showMenuBarMessage("Error: \(error.localizedDescription)")
             }
         }
     }

@@ -6,7 +6,7 @@ BUILD_DIR="$PROJECT_DIR/build"
 APP_BUNDLE="$BUILD_DIR/Polisher.app"
 DMG_DIR="$BUILD_DIR/dmg-staging"
 DMG_OUTPUT="$BUILD_DIR/Polisher.dmg"
-VERSION="1.0.0"
+VERSION=$(defaults read "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "1.0")
 
 echo "==> Step 1: Building app..."
 bash "$PROJECT_DIR/build.sh"
