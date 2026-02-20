@@ -32,13 +32,6 @@ struct GeneralTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Toggle("Auto-replace selected text", isOn: $settings.autoReplace)
-            Text("When off, improved text is copied to clipboard.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Divider()
-
             Toggle("Global hotkey enabled", isOn: $settings.hotKeyEnabled)
 
             HStack {
