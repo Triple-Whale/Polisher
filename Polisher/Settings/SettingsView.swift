@@ -19,6 +19,8 @@ struct SettingsView: View {
                 .tabItem { Label("History", systemImage: "clock") }
             LogsTab()
                 .tabItem { Label("Logs", systemImage: "doc.text") }
+            AboutTab()
+                .tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 500, height: 420)
         .environmentObject(settings)
@@ -642,5 +644,45 @@ struct LogRowView: View {
         case .error: return .red
         case .debug: return .secondary
         }
+    }
+}
+
+struct AboutTab: View {
+    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+    private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 48))
+                .foregroundColor(.accentColor)
+
+            Text("Polisher")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Text("v\(version) (build \(build))")
+                .font(.callout)
+                .foregroundColor(.secondary)
+
+            Text("AI-powered text polishing from your menu bar")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Divider()
+                .frame(width: 200)
+
+            VStack(spacing: 4) {
+                Text("Created by Chezi Hoyzer")
+                    .font(.body)
+                Link("Triple Whale", destination: URL(string: "https://triplewhale.com")!)
+                    .font(.body)
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
 }
