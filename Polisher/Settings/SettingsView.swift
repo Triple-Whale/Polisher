@@ -31,9 +31,10 @@ struct SettingsView: View {
 
 struct GeneralTab: View {
     @EnvironmentObject var settings: SettingsManager
+    @ObservedObject var promptManager = SystemPromptManager.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Toggle("Global hotkey enabled", isOn: $settings.hotKeyEnabled)
 
             HStack {
@@ -48,11 +49,32 @@ struct GeneralTab: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            Divider()
-
             Toggle("Launch at login", isOn: $settings.launchAtLogin)
 
-            Spacer()
+            Divider()
+
+            HStack {
+                Text("System Prompt")
+                    .font(.headline)
+                Spacer()
+                Button("Reset") {
+                    promptManager.resetToDefault()
+                }
+                .font(.caption)
+                .disabled(promptManager.customPrompt == SystemPromptManager.defaultPrompt)
+            }
+
+            TextEditor(text: $promptManager.customPrompt)
+                .font(.system(size: 11))
+                .frame(maxHeight: .infinity)
+                .scrollContentBackground(.hidden)
+                .padding(6)
+                .background(Color(nsColor: .controlBackgroundColor))
+                .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                )
         }
         .padding()
     }
