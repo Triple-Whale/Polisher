@@ -1,32 +1,29 @@
+import Cocoa
 import UserNotifications
 
 class NotificationManager {
     func sendNotification(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
-
-        UNUserNotificationCenter.current().add(request) { _ in }
+        showMenuBarMessage(body)
     }
 
     func notifySuccess(originalLength: Int, improvedLength: Int) {
-        sendNotification(
-            title: "Text Improved",
-            body: "Improved text copied to clipboard (\(originalLength) -> \(improvedLength) chars)"
-        )
+        showMenuBarMessage("Copied to clipboard! (\(originalLength) -> \(improvedLength) chars)")
     }
 
     func notifyError(_ error: Error) {
-        sendNotification(
-            title: "Polisher Error",
-            body: error.localizedDescription
-        )
+        showMenuBarMessage("Error: \(error.localizedDescription)", duration: 5.0)
+    }
+
+    func showMenuBarMessage(_ message: String, duration: TimeInterval = 3.0) {
+        DispatchQueue.main.async {
+            guard let appDelegate = NSApp.delegate as? AppDelegate,
+                  let button = appDelegate.statusItem?.button else { return }
+
+            button.title = " \(message)"
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                button.title = ""
+            }
+        }
     }
 }

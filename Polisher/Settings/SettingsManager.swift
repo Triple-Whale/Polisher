@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Carbon
 
 class SettingsManager: ObservableObject {
     private let keychain = KeychainManager()
@@ -24,6 +25,14 @@ class SettingsManager: ObservableObject {
         didSet { UserDefaults.standard.set(hotKeyEnabled, forKey: "hotKeyEnabled") }
     }
 
+    @Published var hotKeyCode: UInt32 {
+        didSet { UserDefaults.standard.set(hotKeyCode, forKey: "hotKeyCode") }
+    }
+
+    @Published var hotKeyModifiers: UInt32 {
+        didSet { UserDefaults.standard.set(hotKeyModifiers, forKey: "hotKeyModifiers") }
+    }
+
     var claudeAPIKey: String {
         get { keychain.load(key: "claudeAPIKey") ?? "" }
         set {
@@ -40,31 +49,86 @@ class SettingsManager: ObservableObject {
         }
     }
 
+    var geminiAPIKey: String {
+        get { keychain.load(key: "geminiAPIKey") ?? "" }
+        set {
+            _ = keychain.save(key: "geminiAPIKey", value: newValue)
+            objectWillChange.send()
+        }
+    }
+
     init() {
         let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? AIProviderType.claude.rawValue
         self.selectedProvider = AIProviderType(rawValue: providerRaw) ?? .claude
 
-        self.selectedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "claude-sonnet-4-5-20250514"
+        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "claude-sonnet-4-6"
+        let provider = AIProviderType(rawValue: providerRaw) ?? .claude
+        let validModels: [String]
+        switch provider {
+        case .claude: validModels = ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
+        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
+        case .gemini: validModels = ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
+        }
+        self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
         self.autoReplace = UserDefaults.standard.bool(forKey: "autoReplace")
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
 
         let hotKeyDefault = UserDefaults.standard.object(forKey: "hotKeyEnabled")
         self.hotKeyEnabled = hotKeyDefault != nil ? UserDefaults.standard.bool(forKey: "hotKeyEnabled") : true
+
+        let savedKeyCode = UserDefaults.standard.object(forKey: "hotKeyCode")
+        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 34 // 'i'
+
+        let savedModifiers = UserDefaults.standard.object(forKey: "hotKeyModifiers")
+        self.hotKeyModifiers = savedModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyModifiers")) : UInt32(cmdKey | optionKey)
     }
 
     func modelsForProvider(_ provider: AIProviderType) -> [String] {
         switch provider {
         case .claude:
-            return ["claude-sonnet-4-5-20250514", "claude-haiku-4-5-20251001", "claude-opus-4-5-20250514"]
+            return ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
         case .openai:
             return ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
+        case .gemini:
+            return ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
         }
     }
 
     func defaultModel(for provider: AIProviderType) -> String {
         switch provider {
-        case .claude: return "claude-sonnet-4-5-20250514"
+        case .claude: return "claude-sonnet-4-6"
         case .openai: return "gpt-4o-mini"
+        case .gemini: return "gemini-2.0-flash"
         }
+    }
+
+    var shortcutDisplayString: String {
+        return Self.shortcutString(keyCode: hotKeyCode, modifiers: hotKeyModifiers)
+    }
+
+    static func shortcutString(keyCode: UInt32, modifiers: UInt32) -> String {
+        var parts = ""
+        if modifiers & UInt32(controlKey) != 0 { parts += "\u{2303}" }
+        if modifiers & UInt32(optionKey) != 0 { parts += "\u{2325}" }
+        if modifiers & UInt32(shiftKey) != 0 { parts += "\u{21E7}" }
+        if modifiers & UInt32(cmdKey) != 0 { parts += "\u{2318}" }
+        parts += Self.keyCodeToString(keyCode)
+        return parts
+    }
+
+    private static func keyCodeToString(_ keyCode: UInt32) -> String {
+        let keyMap: [UInt32: String] = [
+            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
+            8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
+            16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
+            23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0",
+            30: "]", 31: "O", 32: "U", 33: "[", 34: "I", 35: "P", 37: "L",
+            38: "J", 39: "'", 40: "K", 41: ";", 42: "\\", 43: ",", 44: "/",
+            45: "N", 46: "M", 47: ".", 50: "`",
+            36: "\u{21A9}", 48: "\u{21E5}", 49: "\u{2423}", 51: "\u{232B}",
+            53: "\u{238B}", 76: "\u{2324}",
+            123: "\u{2190}", 124: "\u{2192}", 125: "\u{2193}", 126: "\u{2191}",
+        ]
+        return keyMap[keyCode] ?? "?"
     }
 }

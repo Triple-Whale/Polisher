@@ -5,7 +5,8 @@ class SystemPromptManager {
 
     private let defaultPrompt = """
     Fix grammar, spelling, and punctuation errors. Make the text sound professional and polished. \
-    Preserve the original meaning, tone, and intent. Return ONLY the improved text with no \
+    Preserve the original meaning, tone, and intent. Never use double dashes (--) or em dashes. \
+    Use a single dash (-) instead. Return ONLY the improved text with no \
     explanations, preamble, or quotes around it.
     """
 
