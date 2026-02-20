@@ -73,8 +73,14 @@ struct GeneralTab: View {
                 .cornerRadius(6)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        .stroke(promptManager.customPrompt.count < 30 ? Color.red : Color(nsColor: .separatorColor), lineWidth: 1)
                 )
+
+            if promptManager.customPrompt.count < 30 {
+                Text("Prompt must be at least 30 characters (\(promptManager.customPrompt.count)/30)")
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
         }
         .padding()
     }
