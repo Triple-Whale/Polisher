@@ -1,17 +1,17 @@
 import Foundation
 
-class OpenAIProvider: AIProvider {
-    let providerType: AIProviderType = .openai
+class GeminiProvider: AIProvider {
+    let providerType: AIProviderType = .gemini
     let availableModels = [
-        "gpt-4o-mini",
-        "gpt-4o",
-        "gpt-4-turbo"
+        "gemini-2.0-flash",
+        "gemini-2.0-pro",
+        "gemini-1.5-pro",
     ]
 
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "gpt-4o-mini") {
+    init(apiKey: String, model: String = "gemini-2.0-flash") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -24,20 +24,22 @@ class OpenAIProvider: AIProvider {
     func improveText(_ text: String, systemPrompt: String) async throws -> String {
         guard !apiKey.isEmpty else { throw AIError.noAPIKey }
 
-        let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "model": model,
-            "temperature": 0.3,
-            "max_tokens": 4096,
-            "messages": [
-                ["role": "system", "content": systemPrompt],
-                ["role": "user", "content": text]
+            "systemInstruction": [
+                "parts": [["text": systemPrompt]]
+            ],
+            "contents": [
+                ["parts": [["text": text]]]
+            ],
+            "generationConfig": [
+                "temperature": 0.3,
+                "maxOutputTokens": 4096,
             ]
         ]
 
@@ -51,18 +53,20 @@ class OpenAIProvider: AIProvider {
 
         guard httpResponse.statusCode == 200 else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            LogManager.shared.log(.error, category: "OpenAI", "HTTP \(httpResponse.statusCode): \(errorBody)")
+            LogManager.shared.log(.error, category: "Gemini", "HTTP \(httpResponse.statusCode): \(errorBody)")
             throw AIError.httpError(httpResponse.statusCode, errorBody)
         }
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let choices = json["choices"] as? [[String: Any]],
-              let firstChoice = choices.first,
-              let message = firstChoice["message"] as? [String: Any],
-              let content = message["content"] as? String else {
+              let candidates = json["candidates"] as? [[String: Any]],
+              let firstCandidate = candidates.first,
+              let content = firstCandidate["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let firstPart = parts.first,
+              let text = firstPart["text"] as? String else {
             throw AIError.invalidResponse
         }
 
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

@@ -3,6 +3,7 @@ import Foundation
 enum AIProviderType: String, CaseIterable, Codable {
     case claude = "Claude"
     case openai = "OpenAI"
+    case gemini = "Gemini"
 }
 
 protocol AIProvider {

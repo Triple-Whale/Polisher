@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 import UserNotifications
+import Combine
 
 class EditableWindow: NSWindow {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -32,9 +33,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let settingsManager = SettingsManager()
     let aiManager = AIManager()
     let notificationManager = NotificationManager()
+    let historyManager = HistoryManager()
     var servicesProvider: ServicesProvider!
     var globalHotKey: GlobalHotKey!
     var settingsWindow: NSWindow?
+    var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -47,7 +50,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         servicesProvider = ServicesProvider(
             aiManager: aiManager,
             settingsManager: settingsManager,
-            notificationManager: notificationManager
+            notificationManager: notificationManager,
+            historyManager: historyManager
         )
         NSApp.servicesProvider = servicesProvider
         NSUpdateDynamicServices()
@@ -55,7 +59,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         globalHotKey = GlobalHotKey(
             aiManager: aiManager,
             settingsManager: settingsManager,
-            notificationManager: notificationManager
+            notificationManager: notificationManager,
+            historyManager: historyManager
         )
         globalHotKey.register()
 
@@ -71,6 +76,50 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         SystemPromptManager.shared.refreshIfNeeded()
+
+        setupProcessingIndicator()
+        setupShortcutObserver()
+
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        LogManager.shared.log(.info, category: "App", "Polisher v\(version) started")
+        LogManager.shared.log(.info, category: "App", "Provider: \(settingsManager.selectedProvider.rawValue), Model: \(settingsManager.selectedModel)")
+    }
+
+    private func setupProcessingIndicator() {
+        aiManager.$isProcessing
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isProcessing in
+                guard let self, let button = self.statusItem?.button else { return }
+                if isProcessing {
+                    button.title = " Polishing..."
+                    if let img = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Processing") {
+                        img.size = NSSize(width: 18, height: 18)
+                        img.isTemplate = true
+                        button.image = img
+                    }
+                } else {
+                    button.title = ""
+                    if let img = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Polisher") {
+                        img.size = NSSize(width: 18, height: 18)
+                        img.isTemplate = true
+                        button.image = img
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func setupShortcutObserver() {
+        Publishers.CombineLatest(
+            settingsManager.$hotKeyCode,
+            settingsManager.$hotKeyModifiers
+        )
+        .dropFirst()
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _, _ in
+            self?.globalHotKey.reregister()
+        }
+        .store(in: &cancellables)
     }
 
     private func setupMainMenu() {
@@ -110,6 +159,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
+
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let versionItem = NSMenuItem(title: "Polisher v\(version)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
+
+        menu.addItem(NSMenuItem.separator())
 
         let providerItem = NSMenuItem(title: "Provider: \(settingsManager.selectedProvider.rawValue)", action: nil, keyEquivalent: "")
         providerItem.isEnabled = false
@@ -159,9 +215,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsView = SettingsView()
             .environmentObject(settingsManager)
             .environmentObject(aiManager)
+            .environmentObject(historyManager)
 
         let window = EditableWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 450, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 420),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -202,6 +259,13 @@ extension AppDelegate {
     private func rebuildMenu() {
         guard let menu = statusItem?.menu else { return }
         menu.removeAllItems()
+
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let versionItem = NSMenuItem(title: "Polisher v\(version)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
+
+        menu.addItem(NSMenuItem.separator())
 
         let providerItem = NSMenuItem(title: "Provider: \(settingsManager.selectedProvider.rawValue)", action: nil, keyEquivalent: "")
         providerItem.isEnabled = false

@@ -3,15 +3,15 @@ import Foundation
 class ClaudeProvider: AIProvider {
     let providerType: AIProviderType = .claude
     let availableModels = [
-        "claude-sonnet-4-5-20250514",
+        "claude-sonnet-4-6",
         "claude-haiku-4-5-20251001",
-        "claude-opus-4-5-20250514"
+        "claude-opus-4-6",
     ]
 
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "claude-sonnet-4-5-20250514") {
+    init(apiKey: String, model: String = "claude-sonnet-4-6") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -52,6 +52,7 @@ class ClaudeProvider: AIProvider {
 
         guard httpResponse.statusCode == 200 else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            LogManager.shared.log(.error, category: "Claude", "HTTP \(httpResponse.statusCode): \(errorBody)")
             throw AIError.httpError(httpResponse.statusCode, errorBody)
         }
 

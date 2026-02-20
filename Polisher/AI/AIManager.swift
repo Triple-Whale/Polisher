@@ -3,16 +3,19 @@ import Foundation
 class AIManager: ObservableObject {
     private var claudeProvider: ClaudeProvider
     private var openAIProvider: OpenAIProvider
+    private var geminiProvider: GeminiProvider
     @Published var isProcessing = false
 
     init() {
         claudeProvider = ClaudeProvider(apiKey: "")
         openAIProvider = OpenAIProvider(apiKey: "")
+        geminiProvider = GeminiProvider(apiKey: "")
     }
 
     func configure(with settings: SettingsManager) {
         claudeProvider.configure(apiKey: settings.claudeAPIKey, model: settings.selectedModel)
         openAIProvider.configure(apiKey: settings.openAIAPIKey, model: settings.selectedModel)
+        geminiProvider.configure(apiKey: settings.geminiAPIKey, model: settings.selectedModel)
     }
 
     var currentProvider: AIProvider {
@@ -20,6 +23,7 @@ class AIManager: ObservableObject {
         switch settings.selectedProvider {
         case .claude: return claudeProvider
         case .openai: return openAIProvider
+        case .gemini: return geminiProvider
         }
     }
 
@@ -39,8 +43,15 @@ class AIManager: ObservableObject {
         case .openai:
             openAIProvider.configure(apiKey: settings.openAIAPIKey, model: settings.selectedModel)
             aiProvider = openAIProvider
+        case .gemini:
+            geminiProvider.configure(apiKey: settings.geminiAPIKey, model: settings.selectedModel)
+            aiProvider = geminiProvider
         }
 
-        return try await aiProvider.improveText(text, systemPrompt: systemPrompt)
+        let result = try await aiProvider.improveText(text, systemPrompt: systemPrompt)
+        return result
+            .replacingOccurrences(of: "\u{2014}", with: "-")
+            .replacingOccurrences(of: "\u{2013}", with: "-")
+            .replacingOccurrences(of: "--", with: "-")
     }
 }
