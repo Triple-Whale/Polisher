@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>Polisher</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.triplewhale.polisher</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Polisher</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMessage</key>
+            <string>improveText</string>
+            <key>NSMenuItem</key>
+            <dict>
+                <key>default</key>
+                <string>Improve Text with AI</string>
+            </dict>
+            <key>NSPortName</key>
+            <string>Polisher</string>
+            <key>NSSendTypes</key>
+            <array>
+                <string>NSStringPboardType</string>
+            </array>
+            <key>NSReturnTypes</key>
+            <array>
+                <string>NSStringPboardType</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>
