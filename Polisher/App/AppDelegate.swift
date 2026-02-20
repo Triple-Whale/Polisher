@@ -2,6 +2,31 @@ import Cocoa
 import SwiftUI
 import UserNotifications
 
+class EditableWindow: NSWindow {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command else {
+            return super.performKeyEquivalent(with: event)
+        }
+
+        switch event.charactersIgnoringModifiers {
+        case "v":
+            firstResponder?.tryToPerform(#selector(NSText.paste(_:)), with: nil)
+            return true
+        case "c":
+            firstResponder?.tryToPerform(#selector(NSText.copy(_:)), with: nil)
+            return true
+        case "x":
+            firstResponder?.tryToPerform(#selector(NSText.cut(_:)), with: nil)
+            return true
+        case "a":
+            firstResponder?.tryToPerform(#selector(NSText.selectAll(_:)), with: nil)
+            return true
+        default:
+            return super.performKeyEquivalent(with: event)
+        }
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     let settingsManager = SettingsManager()
@@ -16,6 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ProcessInfo.processInfo.disableAutomaticTermination("Polisher menu bar app")
         NSApp.disableRelaunchOnLogin()
 
+        setupMainMenu()
         setupStatusItem()
 
         servicesProvider = ServicesProvider(
@@ -45,6 +71,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         SystemPromptManager.shared.refreshIfNeeded()
+    }
+
+    private func setupMainMenu() {
+        let mainMenu = NSMenu()
+
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+        editMenu.addItem(NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "Z"))
+        editMenu.addItem(NSMenuItem.separator())
+        editMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+
+        let editMenuItem = NSMenuItem(title: "Edit", action: nil, keyEquivalent: "")
+        editMenuItem.submenu = editMenu
+        mainMenu.addItem(editMenuItem)
+
+        NSApp.mainMenu = mainMenu
     }
 
     private func setupStatusItem() {
@@ -103,6 +148,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
+        NSApp.setActivationPolicy(.regular)
+
         if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -113,7 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(settingsManager)
             .environmentObject(aiManager)
 
-        let window = NSWindow(
+        let window = EditableWindow(
             contentRect: NSRect(x: 0, y: 0, width: 450, height: 300),
             styleMask: [.titled, .closable],
             backing: .buffered,
@@ -123,6 +170,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView = NSHostingView(rootView: settingsView)
         window.center()
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
@@ -135,6 +183,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
     }
 }
 
