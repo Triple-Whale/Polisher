@@ -27,7 +27,6 @@ swiftc \
     -framework Security \
     -framework UserNotifications \
     -framework SwiftUI \
-    -parse-as-library \
     $SWIFT_FILES
 
 echo "==> Creating .app bundle..."
@@ -36,6 +35,7 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 cp "$BUILD_DIR/Polisher" "$APP_BUNDLE/Contents/MacOS/Polisher"
 cp "$SRC_DIR/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
+cp "$SRC_DIR/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
 
 echo "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
