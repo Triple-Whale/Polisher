@@ -32,6 +32,9 @@ class AIManager: ObservableObject {
         defer { Task { @MainActor in isProcessing = false } }
 
         let systemPrompt = SystemPromptManager.shared.currentPrompt
+        guard systemPrompt.count >= 30 else {
+            throw AIError.invalidPrompt
+        }
         let settings = SettingsManager()
         let selectedProvider = provider ?? settings.selectedProvider
 

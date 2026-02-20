@@ -15,6 +15,7 @@ protocol AIProvider {
 enum AIError: LocalizedError {
     case noAPIKey
     case invalidResponse
+    case invalidPrompt
     case httpError(Int, String)
     case networkError(Error)
 
@@ -22,6 +23,7 @@ enum AIError: LocalizedError {
         switch self {
         case .noAPIKey: return "No API key configured"
         case .invalidResponse: return "Invalid response from AI"
+        case .invalidPrompt: return "System prompt must be at least 30 characters"
         case .httpError(let code, let msg): return "HTTP \(code): \(msg)"
         case .networkError(let err): return "Network error: \(err.localizedDescription)"
         }
