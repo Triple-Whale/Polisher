@@ -4,8 +4,13 @@ class ClaudeProvider: AIProvider {
     let providerType: AIProviderType = .claude
     let availableModels = [
         "claude-sonnet-4-6",
-        "claude-haiku-4-5-20251001",
         "claude-opus-4-6",
+        "claude-haiku-4-5-20251001",
+        "claude-sonnet-4-5",
+        "claude-opus-4-5",
+        "claude-opus-4-1",
+        "claude-sonnet-4-0",
+        "claude-opus-4-0",
     ]
 
     private var apiKey: String
