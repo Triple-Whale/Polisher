@@ -54,15 +54,15 @@ class SettingsManager: ObservableObject {
     }
 
     init() {
-        let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? AIProviderType.claude.rawValue
-        self.selectedProvider = AIProviderType(rawValue: providerRaw) ?? .claude
+        let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? AIProviderType.openai.rawValue
+        self.selectedProvider = AIProviderType(rawValue: providerRaw) ?? .openai
 
-        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "claude-sonnet-4-6"
-        let provider = AIProviderType(rawValue: providerRaw) ?? .claude
+        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "gpt-4o-mini"
+        let provider = AIProviderType(rawValue: providerRaw) ?? .openai
         let validModels: [String]
         switch provider {
         case .claude: validModels = ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
-        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
+        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "o4-mini", "o3-mini", "o1", "gpt-4-turbo"]
         case .gemini: validModels = ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
         }
         self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
@@ -83,7 +83,7 @@ class SettingsManager: ObservableObject {
         case .claude:
             return ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
         case .openai:
-            return ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
+            return ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "o4-mini", "o3-mini", "o1", "gpt-4-turbo"]
         case .gemini:
             return ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
         }
