@@ -5,7 +5,13 @@ class OpenAIProvider: AIProvider {
     let availableModels = [
         "gpt-4o-mini",
         "gpt-4o",
-        "gpt-4-turbo"
+        "gpt-4.1-nano",
+        "gpt-4.1-mini",
+        "gpt-4.1",
+        "o4-mini",
+        "o3-mini",
+        "o1",
+        "gpt-4-turbo",
     ]
 
     private var apiKey: String
