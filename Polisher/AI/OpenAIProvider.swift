@@ -8,8 +8,13 @@ class OpenAIProvider: AIProvider {
         "gpt-4.1-nano",
         "gpt-4.1-mini",
         "gpt-4.1",
+        "gpt-5",
+        "gpt-5.1",
+        "gpt-5.2",
+        "gpt-5.2-pro",
         "o4-mini",
         "o3-mini",
+        "o3",
         "o1",
         "gpt-4-turbo",
     ]

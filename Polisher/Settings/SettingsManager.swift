@@ -61,9 +61,9 @@ class SettingsManager: ObservableObject {
         let provider = AIProviderType(rawValue: providerRaw) ?? .openai
         let validModels: [String]
         switch provider {
-        case .claude: validModels = ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
-        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "o4-mini", "o3-mini", "o1", "gpt-4-turbo"]
-        case .gemini: validModels = ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
+        case .claude: validModels = ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1", "claude-sonnet-4-0", "claude-opus-4-0"]
+        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5.2-pro", "o4-mini", "o3-mini", "o3", "o1", "gpt-4-turbo"]
+        case .gemini: validModels = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-2.0-flash"]
         }
         self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
@@ -81,11 +81,11 @@ class SettingsManager: ObservableObject {
     func modelsForProvider(_ provider: AIProviderType) -> [String] {
         switch provider {
         case .claude:
-            return ["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]
+            return ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1", "claude-sonnet-4-0", "claude-opus-4-0"]
         case .openai:
-            return ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "o4-mini", "o3-mini", "o1", "gpt-4-turbo"]
+            return ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5.2-pro", "o4-mini", "o3-mini", "o3", "o1", "gpt-4-turbo"]
         case .gemini:
-            return ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro"]
+            return ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-2.0-flash"]
         }
     }
 
@@ -93,7 +93,7 @@ class SettingsManager: ObservableObject {
         switch provider {
         case .claude: return "claude-sonnet-4-6"
         case .openai: return "gpt-4o-mini"
-        case .gemini: return "gemini-2.0-flash"
+        case .gemini: return "gemini-2.5-flash"
         }
     }
 

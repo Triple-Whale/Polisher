@@ -3,15 +3,18 @@ import Foundation
 class GeminiProvider: AIProvider {
     let providerType: AIProviderType = .gemini
     let availableModels = [
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-pro",
+        "gemini-3-flash-preview",
+        "gemini-3.1-pro-preview",
         "gemini-2.0-flash",
-        "gemini-2.0-pro",
-        "gemini-1.5-pro",
     ]
 
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "gemini-2.0-flash") {
+    init(apiKey: String, model: String = "gemini-2.5-flash") {
         self.apiKey = apiKey
         self.model = model
     }
