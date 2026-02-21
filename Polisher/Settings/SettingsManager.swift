@@ -57,7 +57,7 @@ class SettingsManager: ObservableObject {
         let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? AIProviderType.openai.rawValue
         self.selectedProvider = AIProviderType(rawValue: providerRaw) ?? .openai
 
-        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "gpt-4o-mini"
+        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "gpt-5.2"
         let provider = AIProviderType(rawValue: providerRaw) ?? .openai
         let validModels: [String]
         switch provider {
@@ -92,7 +92,7 @@ class SettingsManager: ObservableObject {
     func defaultModel(for provider: AIProviderType) -> String {
         switch provider {
         case .claude: return "claude-sonnet-4-6"
-        case .openai: return "gpt-4o-mini"
+        case .openai: return "gpt-5.2"
         case .gemini: return "gemini-2.5-flash"
         }
     }

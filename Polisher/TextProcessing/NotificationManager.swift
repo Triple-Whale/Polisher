@@ -1,28 +1,25 @@
 import Cocoa
-import UserNotifications
 
 class NotificationManager {
-    func sendNotification(title: String, body: String) {
-        showMenuBarMessage(body)
-    }
-
-    func notifySuccess(originalLength: Int, improvedLength: Int) {
-        showMenuBarMessage("Copied to clipboard! (\(originalLength) -> \(improvedLength) chars)")
-    }
-
-    func notifyError(_ error: Error) {
-        showMenuBarMessage("Error: \(error.localizedDescription)", duration: 5.0)
-    }
-
-    func showMenuBarMessage(_ message: String, duration: TimeInterval = 3.0) {
+    func setLoadingIcon() {
         DispatchQueue.main.async {
-            guard let appDelegate = NSApp.delegate as? AppDelegate,
-                  let button = appDelegate.statusItem?.button else { return }
+            guard let button = (NSApp.delegate as? AppDelegate)?.statusItem?.button else { return }
+            if let img = NSImage(systemSymbolName: "arrow.trianglehead.2.clockwise", accessibilityDescription: "Processing") {
+                img.size = NSSize(width: 18, height: 18)
+                img.isTemplate = true
+                button.image = img
+            }
+        }
+    }
 
-            button.title = " \(message)"
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                button.title = ""
+    func restoreIcon() {
+        DispatchQueue.main.async {
+            guard let button = (NSApp.delegate as? AppDelegate)?.statusItem?.button else { return }
+            button.title = ""
+            if let img = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Polisher") {
+                img.size = NSSize(width: 18, height: 18)
+                img.isTemplate = true
+                button.image = img
             }
         }
     }

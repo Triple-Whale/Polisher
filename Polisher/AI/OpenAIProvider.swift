@@ -42,10 +42,13 @@ class OpenAIProvider: AIProvider {
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
+        let usesLegacyMaxTokens = model.hasPrefix("gpt-4o") || model.hasPrefix("gpt-4-")
+        let tokensKey = usesLegacyMaxTokens ? "max_tokens" : "max_completion_tokens"
+
         let body: [String: Any] = [
             "model": model,
             "temperature": 0.3,
-            "max_tokens": 4096,
+            tokensKey: 4096,
             "messages": [
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": text]
