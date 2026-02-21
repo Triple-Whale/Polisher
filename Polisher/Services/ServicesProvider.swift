@@ -30,9 +30,9 @@ class ServicesProvider: NSObject {
                 let improved = try await ai.improveText(text)
                 history.addEntry(original: text, improved: improved)
                 clipboard.setText(improved)
-                notifications.showMenuBarMessage("Done! Paste to use.")
+                notifications.restoreIcon()
             } catch {
-                notifications.showMenuBarMessage("Error: \(error.localizedDescription)")
+                notifications.restoreIcon()
             }
         }
     }

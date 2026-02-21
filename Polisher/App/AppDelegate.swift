@@ -85,29 +85,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         LogManager.shared.log(.info, category: "App", "Provider: \(settingsManager.selectedProvider.rawValue), Model: \(settingsManager.selectedModel)")
     }
 
-    private func setupProcessingIndicator() {
-        aiManager.$isProcessing
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isProcessing in
-                guard let self, let button = self.statusItem?.button else { return }
-                if isProcessing {
-                    button.title = " Polishing..."
-                    if let img = NSImage(systemSymbolName: "wand.and.rays", accessibilityDescription: "Processing") {
-                        img.size = NSSize(width: 18, height: 18)
-                        img.isTemplate = true
-                        button.image = img
-                    }
-                } else {
-                    button.title = ""
-                    if let img = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Polisher") {
-                        img.size = NSSize(width: 18, height: 18)
-                        img.isTemplate = true
-                        button.image = img
-                    }
-                }
-            }
-            .store(in: &cancellables)
-    }
+    private func setupProcessingIndicator() {}
 
     private func setupShortcutObserver() {
         Publishers.CombineLatest(

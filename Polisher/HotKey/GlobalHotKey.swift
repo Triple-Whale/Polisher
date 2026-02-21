@@ -69,7 +69,7 @@ class GlobalHotKey {
 
         guard let clipboardText = clipboardManager.getText(), !clipboardText.isEmpty else {
             log.log(.error, category: "Capture", "Clipboard is empty")
-            notificationManager.showMenuBarMessage("Clipboard is empty")
+            notificationManager.restoreIcon()
             return
         }
 
@@ -80,6 +80,8 @@ class GlobalHotKey {
         let provider = settingsManager.selectedProvider.rawValue
         let model = settingsManager.selectedModel
         log.log(.info, category: "API", "Sending to \(provider) (\(model))...")
+
+        notificationManager.setLoadingIcon()
 
         let history = historyManager
         let startTime = Date()
@@ -94,13 +96,13 @@ class GlobalHotKey {
                     history.addEntry(original: clipboardText, improved: improved)
                     clipboardManager.setText(improved)
                     log.log(.success, category: "Output", "Copied to clipboard (\(improved.count) chars)")
-                    notificationManager.showMenuBarMessage("Done! Paste to use.")
+                    notificationManager.restoreIcon()
                 }
             } catch {
                 let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
                 log.log(.error, category: "API", "Failed after \(elapsed): \(error.localizedDescription)")
                 await MainActor.run {
-                    notificationManager.showMenuBarMessage("Error: \(error.localizedDescription)")
+                    notificationManager.restoreIcon()
                 }
             }
         }
