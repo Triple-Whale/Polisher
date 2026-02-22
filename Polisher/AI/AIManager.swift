@@ -32,6 +32,8 @@ class AIManager: ObservableObject {
         defer { Task { @MainActor in isProcessing = false } }
 
         let systemPrompt = SystemPromptManager.shared.currentPrompt
+        let promptPreview = String(systemPrompt.prefix(80)).replacingOccurrences(of: "\n", with: " ")
+        LogManager.shared.log(.info, category: "Prompt", "Using: \"\(promptPreview)...\" (\(systemPrompt.count) chars)")
         guard systemPrompt.count >= 30 else {
             throw AIError.invalidPrompt
         }
