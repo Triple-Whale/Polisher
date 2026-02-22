@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class SystemPromptManager: ObservableObject {
     static let shared = SystemPromptManager()
@@ -15,12 +16,9 @@ class SystemPromptManager: ObservableObject {
     private let cacheKey = "cachedSystemPrompt"
     private let lastFetchKey = "lastPromptFetch"
     private let refreshInterval: TimeInterval = 3600
+    private var cancellable: AnyCancellable?
 
-    @Published var customPrompt: String {
-        didSet {
-            UserDefaults.standard.set(customPrompt, forKey: userPromptKey)
-        }
-    }
+    @Published var customPrompt: String
 
     var currentPrompt: String {
         if !customPrompt.isEmpty {
@@ -34,6 +32,12 @@ class SystemPromptManager: ObservableObject {
 
     private init() {
         self.customPrompt = UserDefaults.standard.string(forKey: userPromptKey) ?? Self.defaultPrompt
+        self.cancellable = $customPrompt
+            .dropFirst()
+            .sink { [weak self] newValue in
+                guard let self else { return }
+                UserDefaults.standard.set(newValue, forKey: self.userPromptKey)
+            }
     }
 
     func resetToDefault() {
