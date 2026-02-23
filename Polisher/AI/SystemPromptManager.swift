@@ -6,9 +6,9 @@ class SystemPromptManager: ObservableObject {
 
     static let defaultPrompt = """
     Fix grammar, spelling, and punctuation errors. Make the text sound professional and polished. \
-    Preserve the original meaning, tone, and intent. Never use double dashes (--) or em dashes. \
-    Use a single dash (-) instead. Return ONLY the improved text with no \
-    explanations, preamble, or quotes around it.
+    Preserve the original meaning, tone, and intent. Preserve the original line breaks and paragraph structure exactly. \
+    Never use double dashes (--) or em dashes. Use a single dash (-) instead. \
+    Return ONLY the improved text with no explanations, preamble, or quotes around it.
     """
 
     private let userPromptKey = "userSystemPrompt"

@@ -72,10 +72,10 @@ class SettingsManager: ObservableObject {
         self.hotKeyEnabled = hotKeyDefault != nil ? UserDefaults.standard.bool(forKey: "hotKeyEnabled") : true
 
         let savedKeyCode = UserDefaults.standard.object(forKey: "hotKeyCode")
-        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 34 // 'i'
+        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 11 // 'b'
 
         let savedModifiers = UserDefaults.standard.object(forKey: "hotKeyModifiers")
-        self.hotKeyModifiers = savedModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyModifiers")) : UInt32(cmdKey | optionKey)
+        self.hotKeyModifiers = savedModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyModifiers")) : UInt32(cmdKey)
     }
 
     func modelsForProvider(_ provider: AIProviderType) -> [String] {
