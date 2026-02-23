@@ -119,6 +119,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.globalHotKey.reregister()
         }
         .store(in: &cancellables)
+
+        Publishers.CombineLatest(
+            settingsManager.$replaceHotKeyCode,
+            settingsManager.$replaceHotKeyModifiers
+        )
+        .dropFirst()
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _, _ in
+            self?.globalHotKey.reregister()
+        }
+        .store(in: &cancellables)
     }
 
     private func setupMainMenu() {
