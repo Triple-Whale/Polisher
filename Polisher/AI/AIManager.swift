@@ -31,6 +31,7 @@ class AIManager: ObservableObject {
         await MainActor.run { isProcessing = true }
         defer { Task { @MainActor in isProcessing = false } }
 
+        let inputText = text
         let systemPrompt = SystemPromptManager.shared.currentPrompt
         let promptPreview = String(systemPrompt.prefix(80)).replacingOccurrences(of: "\n", with: " ")
         LogManager.shared.log(.info, category: "Prompt", "Using: \"\(promptPreview)...\" (\(systemPrompt.count) chars)")
@@ -53,7 +54,7 @@ class AIManager: ObservableObject {
             aiProvider = geminiProvider
         }
 
-        let result = try await aiProvider.improveText(text, systemPrompt: systemPrompt)
+        let result = try await aiProvider.improveText(inputText, systemPrompt: systemPrompt)
         return result
             .replacingOccurrences(of: "\u{2014}", with: "-")
             .replacingOccurrences(of: "\u{2013}", with: "-")
