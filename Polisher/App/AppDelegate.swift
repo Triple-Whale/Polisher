@@ -2,6 +2,7 @@ import Cocoa
 import SwiftUI
 import UserNotifications
 import Combine
+import ServiceManagement
 
 class EditableWindow: NSWindow {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -79,6 +80,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupProcessingIndicator()
         setupShortcutObserver()
+        setupLaunchAtLoginObserver()
+        syncLaunchAtLogin()
 
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         LogManager.shared.log(.info, category: "App", "Polisher v\(version) started")
@@ -86,6 +89,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupProcessingIndicator() {}
+
+    private func syncLaunchAtLogin() {
+        if settingsManager.launchAtLogin {
+            try? SMAppService.mainApp.register()
+        } else {
+            try? SMAppService.mainApp.unregister()
+        }
+    }
+
+    private func setupLaunchAtLoginObserver() {
+        settingsManager.$launchAtLogin
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.syncLaunchAtLogin()
+            }
+            .store(in: &cancellables)
+    }
 
     private func setupShortcutObserver() {
         Publishers.CombineLatest(
