@@ -1,6 +1,6 @@
 # Polisher
 
-macOS menu bar app that polishes your text using AI. Copy, shortcut, paste.
+macOS menu bar app that polishes your text using AI.
 
 ## Install
 
@@ -17,20 +17,36 @@ brew install --cask Triple-Whale/tap/polisher
 
 ## Usage
 
-1. Copy any text (`Cmd+C`)
-2. Press `Cmd+Option+I`
-3. Paste the improved text (`Cmd+V`)
+Two modes:
 
-The menu bar shows "Polishing..." while working and "Done! Paste to use." when ready.
+**Clipboard Mode** (`Cmd+B`) - Copy text first, press the shortcut, paste the improved text.
+
+**Replace Mode** (`Cmd+``)  - Select text in any app, press the shortcut, and it gets polished in-place. Requires Accessibility permission (you'll be prompted on first use).
+
+A floating "Polishing..." indicator appears near your cursor while processing.
+
+## Settings
+
+**General** - Enable/disable shortcuts, customize key combinations, toggle launch at login, edit the system prompt that controls how the AI improves your text.
+
+**API Keys** - Add keys for Claude, OpenAI, or Gemini. Each has a "Get API Key" link to the provider's console.
+
+**Provider** - Choose your AI provider and model. Supports all current models including GPT-5.2, Claude Sonnet 4.6, Gemini 2.5 Pro, and more.
+
+**History** - Browse and search your last 20 improvements. Click to expand and see original vs improved text.
+
+**Logs** - Real-time debug view with level filtering (Info, Success, Error, Debug), search, and copy to clipboard.
 
 ## Features
 
-- **3 AI providers** - Claude, OpenAI, Gemini
-- **Editable system prompt** - customize how your text gets improved
-- **History** - browse and search your last 20 improvements
-- **Logs** - debug tab with level filtering, search, and copy
-- **Custom shortcut** - change the keyboard shortcut in settings
-- **Menu bar feedback** - loading icon and status messages
+- 3 AI providers with all current models
+- Editable system prompt
+- Clipboard mode and replace-in-place mode
+- Floating HUD loading indicator near cursor
+- History with search
+- Debug logs
+- Configurable shortcuts
+- Launch at login
 
 ## Build from source
 
