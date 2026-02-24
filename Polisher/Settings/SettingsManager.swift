@@ -78,7 +78,8 @@ class SettingsManager: ObservableObject {
         case .gemini: validModels = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-2.0-flash"]
         }
         self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
-        self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
+        let launchDefault = UserDefaults.standard.object(forKey: "launchAtLogin")
+        self.launchAtLogin = launchDefault != nil ? UserDefaults.standard.bool(forKey: "launchAtLogin") : true
 
         let hotKeyDefault = UserDefaults.standard.object(forKey: "hotKeyEnabled")
         self.hotKeyEnabled = hotKeyDefault != nil ? UserDefaults.standard.bool(forKey: "hotKeyEnabled") : true
