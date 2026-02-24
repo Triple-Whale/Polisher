@@ -35,7 +35,12 @@ struct GeneralTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Toggle("Global hotkey enabled", isOn: $settings.hotKeyEnabled)
+            Text("Clipboard Mode").font(.headline)
+            Text("Polish clipboard contents. Copy text first, then use this shortcut.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Toggle("Enabled", isOn: $settings.hotKeyEnabled)
 
             HStack {
                 Text("Shortcut:")
@@ -45,9 +50,24 @@ struct GeneralTab: View {
                 )
                 .frame(width: 140, height: 24)
             }
-            Text("Click the field above and press a new key combination.")
+
+            Divider()
+
+            Text("Replace Mode").font(.headline)
+            Text("Select text in any app, press the shortcut, and it gets polished in-place.")
                 .font(.caption)
                 .foregroundColor(.secondary)
+
+            Toggle("Enabled", isOn: $settings.replaceHotKeyEnabled)
+
+            HStack {
+                Text("Shortcut:")
+                ShortcutRecorderView(
+                    keyCode: $settings.replaceHotKeyCode,
+                    modifiers: $settings.replaceHotKeyModifiers
+                )
+                .frame(width: 140, height: 24)
+            }
 
             Toggle("Launch at login", isOn: $settings.launchAtLogin)
 

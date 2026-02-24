@@ -29,6 +29,18 @@ class SettingsManager: ObservableObject {
         didSet { UserDefaults.standard.set(hotKeyModifiers, forKey: "hotKeyModifiers") }
     }
 
+    @Published var replaceHotKeyEnabled: Bool {
+        didSet { UserDefaults.standard.set(replaceHotKeyEnabled, forKey: "replaceHotKeyEnabled") }
+    }
+
+    @Published var replaceHotKeyCode: UInt32 {
+        didSet { UserDefaults.standard.set(replaceHotKeyCode, forKey: "replaceHotKeyCode") }
+    }
+
+    @Published var replaceHotKeyModifiers: UInt32 {
+        didSet { UserDefaults.standard.set(replaceHotKeyModifiers, forKey: "replaceHotKeyModifiers") }
+    }
+
     var claudeAPIKey: String {
         get { keychain.load(key: "claudeAPIKey") ?? "" }
         set {
@@ -72,10 +84,19 @@ class SettingsManager: ObservableObject {
         self.hotKeyEnabled = hotKeyDefault != nil ? UserDefaults.standard.bool(forKey: "hotKeyEnabled") : true
 
         let savedKeyCode = UserDefaults.standard.object(forKey: "hotKeyCode")
-        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 11 // 'b'
+        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 50 // '`'
 
         let savedModifiers = UserDefaults.standard.object(forKey: "hotKeyModifiers")
         self.hotKeyModifiers = savedModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyModifiers")) : UInt32(cmdKey)
+
+        let replaceEnabledDefault = UserDefaults.standard.object(forKey: "replaceHotKeyEnabled")
+        self.replaceHotKeyEnabled = replaceEnabledDefault != nil ? UserDefaults.standard.bool(forKey: "replaceHotKeyEnabled") : true
+
+        let savedReplaceKeyCode = UserDefaults.standard.object(forKey: "replaceHotKeyCode")
+        self.replaceHotKeyCode = savedReplaceKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "replaceHotKeyCode")) : 50 // '`'
+
+        let savedReplaceModifiers = UserDefaults.standard.object(forKey: "replaceHotKeyModifiers")
+        self.replaceHotKeyModifiers = savedReplaceModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "replaceHotKeyModifiers")) : UInt32(cmdKey)
     }
 
     func modelsForProvider(_ provider: AIProviderType) -> [String] {
@@ -99,6 +120,10 @@ class SettingsManager: ObservableObject {
 
     var shortcutDisplayString: String {
         return Self.shortcutString(keyCode: hotKeyCode, modifiers: hotKeyModifiers)
+    }
+
+    var replaceShortcutDisplayString: String {
+        return Self.shortcutString(keyCode: replaceHotKeyCode, modifiers: replaceHotKeyModifiers)
     }
 
     static func shortcutString(keyCode: UInt32, modifiers: UInt32) -> String {
