@@ -38,6 +38,8 @@ class GlobalHotKey {
             )
             guard status == noErr else { return status }
 
+            LogManager.shared.log(.debug, category: "HotKey", "Event received, id=\(hotKeyID.id), sig=\(hotKeyID.signature)")
+
             switch hotKeyID.id {
             case 1:
                 GlobalHotKey.instance?.handleHotKey()
@@ -57,9 +59,10 @@ class GlobalHotKey {
         RegisterEventHotKey(settingsManager.hotKeyCode, settingsManager.hotKeyModifiers, clipboardHotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
 
         var replaceHotKeyID = EventHotKeyID()
-        replaceHotKeyID.signature = OSType(0x504F4C53)
+        replaceHotKeyID.signature = OSType(0x504F4C52) // "POLR"
         replaceHotKeyID.id = 2
-        RegisterEventHotKey(settingsManager.replaceHotKeyCode, settingsManager.replaceHotKeyModifiers, replaceHotKeyID, GetApplicationEventTarget(), 0, &replaceHotKeyRef)
+        let replaceStatus = RegisterEventHotKey(settingsManager.replaceHotKeyCode, settingsManager.replaceHotKeyModifiers, replaceHotKeyID, GetApplicationEventTarget(), 0, &replaceHotKeyRef)
+        log.log(.debug, category: "HotKey", "Replace registration status: \(replaceStatus), keyCode: \(settingsManager.replaceHotKeyCode), modifiers: \(settingsManager.replaceHotKeyModifiers)")
 
         let shortcut = SettingsManager.shortcutString(keyCode: settingsManager.hotKeyCode, modifiers: settingsManager.hotKeyModifiers)
         let replaceShortcut = SettingsManager.shortcutString(keyCode: settingsManager.replaceHotKeyCode, modifiers: settingsManager.replaceHotKeyModifiers)
@@ -111,6 +114,8 @@ class GlobalHotKey {
             return
         }
 
+        guard Self.checkAccessibility() else { return }
+
         log.log(.info, category: "HotKey", "Replace shortcut triggered, capturing selected text...")
 
         guard let selectedText = textReplacer.captureSelectedText(), !selectedText.isEmpty else {
@@ -120,6 +125,28 @@ class GlobalHotKey {
         }
 
         processText(selectedText, mode: .replace)
+    }
+
+    private static func checkAccessibility() -> Bool {
+        let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let trusted = AXIsProcessTrustedWithOptions(
+            [key: true] as CFDictionary
+        )
+        if !trusted {
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "Accessibility Permission Required"
+                alert.informativeText = "Polisher needs Accessibility access to capture and replace selected text.\n\n1. Open System Settings > Privacy & Security > Accessibility\n2. Enable Polisher in the list\n3. Try the shortcut again"
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "Open Settings")
+                alert.addButton(withTitle: "Cancel")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+                }
+            }
+            LogManager.shared.log(.error, category: "Access", "Accessibility permission not granted")
+        }
+        return trusted
     }
 
     private enum ProcessingMode {
