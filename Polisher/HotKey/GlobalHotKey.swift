@@ -6,9 +6,7 @@ class GlobalHotKey {
     private let settingsManager: SettingsManager
     private let notificationManager: NotificationManager
     private let historyManager: HistoryManager
-    private let clipboardManager = ClipboardManager()
     private let textReplacer = TextReplacer()
-    private var hotKeyRef: EventHotKeyRef?
     private var replaceHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     private static var instance: GlobalHotKey?
@@ -40,23 +38,13 @@ class GlobalHotKey {
 
             LogManager.shared.log(.debug, category: "HotKey", "Event received, id=\(hotKeyID.id), sig=\(hotKeyID.signature)")
 
-            switch hotKeyID.id {
-            case 1:
-                GlobalHotKey.instance?.handleHotKey()
-            case 2:
+            if hotKeyID.id == 2 {
                 GlobalHotKey.instance?.handleReplaceHotKey()
-            default:
-                break
             }
             return noErr
         }
 
         InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, &eventHandlerRef)
-
-        var clipboardHotKeyID = EventHotKeyID()
-        clipboardHotKeyID.signature = OSType(0x504F4C53) // "POLS"
-        clipboardHotKeyID.id = 1
-        RegisterEventHotKey(settingsManager.hotKeyCode, settingsManager.hotKeyModifiers, clipboardHotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
 
         var replaceHotKeyID = EventHotKeyID()
         replaceHotKeyID.signature = OSType(0x504F4C52) // "POLR"
@@ -64,17 +52,11 @@ class GlobalHotKey {
         let replaceStatus = RegisterEventHotKey(settingsManager.replaceHotKeyCode, settingsManager.replaceHotKeyModifiers, replaceHotKeyID, GetApplicationEventTarget(), 0, &replaceHotKeyRef)
         log.log(.debug, category: "HotKey", "Replace registration status: \(replaceStatus), keyCode: \(settingsManager.replaceHotKeyCode), modifiers: \(settingsManager.replaceHotKeyModifiers)")
 
-        let shortcut = SettingsManager.shortcutString(keyCode: settingsManager.hotKeyCode, modifiers: settingsManager.hotKeyModifiers)
         let replaceShortcut = SettingsManager.shortcutString(keyCode: settingsManager.replaceHotKeyCode, modifiers: settingsManager.replaceHotKeyModifiers)
-        log.log(.info, category: "HotKey", "Registered clipboard shortcut: \(shortcut)")
         log.log(.info, category: "HotKey", "Registered replace shortcut: \(replaceShortcut)")
     }
 
     func unregister() {
-        if let ref = hotKeyRef {
-            UnregisterEventHotKey(ref)
-            hotKeyRef = nil
-        }
         if let ref = replaceHotKeyRef {
             UnregisterEventHotKey(ref)
             replaceHotKeyRef = nil
@@ -91,29 +73,7 @@ class GlobalHotKey {
         log.log(.info, category: "HotKey", "Shortcuts re-registered")
     }
 
-    private func handleHotKey() {
-        guard settingsManager.hotKeyEnabled else {
-            log.log(.debug, category: "HotKey", "Hotkey disabled, ignoring")
-            return
-        }
-
-        log.log(.info, category: "HotKey", "Clipboard shortcut triggered, reading clipboard...")
-
-        guard let clipboardText = clipboardManager.getText(), !clipboardText.isEmpty else {
-            log.log(.error, category: "Capture", "Clipboard is empty")
-            notificationManager.restoreIcon()
-            return
-        }
-
-        processText(clipboardText, mode: .clipboard)
-    }
-
     private func handleReplaceHotKey() {
-        guard settingsManager.replaceHotKeyEnabled else {
-            log.log(.debug, category: "HotKey", "Replace hotkey disabled, ignoring")
-            return
-        }
-
         guard Self.checkAccessibility() else { return }
 
         log.log(.info, category: "HotKey", "Replace shortcut triggered, capturing selected text...")
@@ -124,7 +84,7 @@ class GlobalHotKey {
             return
         }
 
-        processText(selectedText, mode: .replace)
+        processText(selectedText)
     }
 
     private static func checkAccessibility() -> Bool {
@@ -149,12 +109,7 @@ class GlobalHotKey {
         return trusted
     }
 
-    private enum ProcessingMode {
-        case clipboard
-        case replace
-    }
-
-    private func processText(_ text: String, mode: ProcessingMode) {
+    private func processText(_ text: String) {
         let charCount = text.count
         let preview = String(text.prefix(80)).replacingOccurrences(of: "\n", with: " ")
         log.log(.info, category: "Capture", "Read \(charCount) chars: \"\(preview)\(charCount > 80 ? "..." : "")\"")
@@ -172,19 +127,21 @@ class GlobalHotKey {
             do {
                 let improved = try await aiManager.improveText(text)
                 let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
+                let elapsedSeconds = Date().timeIntervalSince(startTime)
                 log.log(.success, category: "API", "Response received in \(elapsed) (\(improved.count) chars)")
 
                 await MainActor.run {
                     history.addEntry(original: text, improved: improved)
+                    StatsManager.shared.recordPolish(
+                        inputChars: text.count,
+                        outputChars: improved.count,
+                        elapsedSeconds: elapsedSeconds,
+                        provider: provider,
+                        model: model
+                    )
 
-                    switch mode {
-                    case .clipboard:
-                        clipboardManager.setText(improved)
-                        log.log(.success, category: "Output", "Copied to clipboard (\(improved.count) chars)")
-                    case .replace:
-                        textReplacer.replaceSelectedText(with: improved)
-                        log.log(.success, category: "Output", "Replaced selected text (\(improved.count) chars)")
-                    }
+                    textReplacer.replaceSelectedText(with: improved)
+                    log.log(.success, category: "Output", "Replaced selected text (\(improved.count) chars)")
 
                     notificationManager.restoreIcon()
                 }
