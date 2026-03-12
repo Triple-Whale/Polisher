@@ -39,6 +39,22 @@ cp "$SRC_DIR/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icn
 
 echo "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
+SIGNING_IDENTITY="Polisher Code Signing"
+if security find-identity -v -p codesigning | grep -q "$SIGNING_IDENTITY"; then
+    echo ""
+    echo "==> Code signing with '$SIGNING_IDENTITY'..."
+    codesign --force --sign "$SIGNING_IDENTITY" \
+        --identifier "com.triplewhale.polisher" \
+        --options runtime \
+        "$APP_BUNDLE"
+    echo "    Signed successfully"
+else
+    echo ""
+    echo "==> WARNING: Signing identity '$SIGNING_IDENTITY' not found, skipping code signing."
+    echo "    To set up signing, run: gsutil cp gs://polisher-config/polisher-signing.p12 /tmp/ && \\"
+    echo "    security import /tmp/polisher-signing.p12 -k ~/Library/Keychains/login.keychain-db -P polisher123 -T /usr/bin/codesign"
+fi
+
 echo ""
 echo "==> Build complete!"
 echo "    App bundle: $APP_BUNDLE"
