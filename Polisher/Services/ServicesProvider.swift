@@ -27,9 +27,9 @@ class ServicesProvider: NSObject {
 
         Task { @MainActor in
             do {
-                let improved = try await ai.improveText(text)
-                history.addEntry(original: text, improved: improved)
-                clipboard.setText(improved)
+                let result = try await ai.improveText(text)
+                history.addEntry(original: text, improved: result.text)
+                clipboard.setText(result.text)
                 notifications.restoreIcon()
             } catch {
                 notifications.restoreIcon()

@@ -234,16 +234,12 @@ struct StatsTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 8) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 8) {
                 statCard(title: "Polishes", value: "\(stats.totalPolishes)", icon: "wand.and.stars")
                 statCard(title: "Chars In", value: formatNumber(stats.totalCharsInput), icon: "text.cursor")
                 statCard(title: "Chars Out", value: formatNumber(stats.totalCharsOutput), icon: "doc.text")
                 statCard(title: "Avg Time", value: String(format: "%.1fs", stats.averageTimePerPolish), icon: "clock")
+                statCard(title: "Total Cost", value: formatCost(stats.totalCost), icon: "dollarsign.circle")
             }
 
             Divider()
@@ -275,13 +271,13 @@ struct StatsTab: View {
                             Text("Model").font(.system(size: 10, weight: .semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text("Polishes").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 50, alignment: .trailing)
+                            Text("Tokens").font(.system(size: 10, weight: .semibold))
                                 .frame(width: 55, alignment: .trailing)
-                            Text("Chars In").font(.system(size: 10, weight: .semibold))
-                                .frame(width: 60, alignment: .trailing)
-                            Text("Chars Out").font(.system(size: 10, weight: .semibold))
-                                .frame(width: 60, alignment: .trailing)
                             Text("Avg Time").font(.system(size: 10, weight: .semibold))
-                                .frame(width: 58, alignment: .trailing)
+                                .frame(width: 52, alignment: .trailing)
+                            Text("Cost").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 52, alignment: .trailing)
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -293,13 +289,13 @@ struct StatsTab: View {
                                     .lineLimit(1)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 Text("\(item.stats.polishes)").font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 50, alignment: .trailing)
+                                Text(formatNumber(item.stats.inputTokens + item.stats.outputTokens)).font(.system(size: 10, design: .monospaced))
                                     .frame(width: 55, alignment: .trailing)
-                                Text(formatNumber(item.stats.charsInput)).font(.system(size: 10, design: .monospaced))
-                                    .frame(width: 60, alignment: .trailing)
-                                Text(formatNumber(item.stats.charsOutput)).font(.system(size: 10, design: .monospaced))
-                                    .frame(width: 60, alignment: .trailing)
                                 Text(String(format: "%.1fs", item.stats.averageTime)).font(.system(size: 10, design: .monospaced))
-                                    .frame(width: 58, alignment: .trailing)
+                                    .frame(width: 52, alignment: .trailing)
+                                Text(formatCost(item.stats.totalCost)).font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 52, alignment: .trailing)
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -353,6 +349,13 @@ struct StatsTab: View {
         if n >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
         if n >= 1_000 { return String(format: "%.1fK", Double(n) / 1_000) }
         return "\(n)"
+    }
+
+    private func formatCost(_ cost: Double) -> String {
+        if cost >= 1.0 { return String(format: "$%.2f", cost) }
+        if cost >= 0.01 { return String(format: "$%.3f", cost) }
+        if cost > 0 { return String(format: "$%.4f", cost) }
+        return "$0"
     }
 }
 

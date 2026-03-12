@@ -125,23 +125,25 @@ class GlobalHotKey {
 
         Task {
             do {
-                let improved = try await aiManager.improveText(text)
+                let result = try await aiManager.improveText(text)
                 let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
                 let elapsedSeconds = Date().timeIntervalSince(startTime)
-                log.log(.success, category: "API", "Response received in \(elapsed) (\(improved.count) chars)")
+                log.log(.success, category: "API", "Response received in \(elapsed) (\(result.text.count) chars, \(result.inputTokens)+\(result.outputTokens) tokens)")
 
                 await MainActor.run {
-                    history.addEntry(original: text, improved: improved)
+                    history.addEntry(original: text, improved: result.text)
                     StatsManager.shared.recordPolish(
                         inputChars: text.count,
-                        outputChars: improved.count,
+                        outputChars: result.text.count,
                         elapsedSeconds: elapsedSeconds,
                         provider: provider,
-                        model: model
+                        model: model,
+                        inputTokens: result.inputTokens,
+                        outputTokens: result.outputTokens
                     )
 
-                    textReplacer.replaceSelectedText(with: improved)
-                    log.log(.success, category: "Output", "Replaced selected text (\(improved.count) chars)")
+                    textReplacer.replaceSelectedText(with: result.text)
+                    log.log(.success, category: "Output", "Replaced selected text (\(result.text.count) chars)")
 
                     notificationManager.restoreIcon()
                 }

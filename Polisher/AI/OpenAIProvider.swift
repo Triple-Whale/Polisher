@@ -35,7 +35,7 @@ class OpenAIProvider: AIProvider {
         return model.hasPrefix("gpt-4o") || model.hasPrefix("gpt-4-")
     }
 
-    func improveText(_ text: String, systemPrompt: String) async throws -> String {
+    func improveText(_ text: String, systemPrompt: String) async throws -> AIResult {
         guard !apiKey.isEmpty else { throw AIError.noAPIKey }
 
         let url = URL(string: "https://api.openai.com/v1/chat/completions")!
@@ -82,6 +82,17 @@ class OpenAIProvider: AIProvider {
             throw AIError.invalidResponse
         }
 
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        var inputTokens = 0
+        var outputTokens = 0
+        if let usage = json["usage"] as? [String: Any] {
+            inputTokens = usage["prompt_tokens"] as? Int ?? 0
+            outputTokens = usage["completion_tokens"] as? Int ?? 0
+        }
+
+        return AIResult(
+            text: content.trimmingCharacters(in: .whitespacesAndNewlines),
+            inputTokens: inputTokens,
+            outputTokens: outputTokens
+        )
     }
 }
