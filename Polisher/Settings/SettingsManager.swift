@@ -17,22 +17,6 @@ class SettingsManager: ObservableObject {
         didSet { UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin") }
     }
 
-    @Published var hotKeyEnabled: Bool {
-        didSet { UserDefaults.standard.set(hotKeyEnabled, forKey: "hotKeyEnabled") }
-    }
-
-    @Published var hotKeyCode: UInt32 {
-        didSet { UserDefaults.standard.set(hotKeyCode, forKey: "hotKeyCode") }
-    }
-
-    @Published var hotKeyModifiers: UInt32 {
-        didSet { UserDefaults.standard.set(hotKeyModifiers, forKey: "hotKeyModifiers") }
-    }
-
-    @Published var replaceHotKeyEnabled: Bool {
-        didSet { UserDefaults.standard.set(replaceHotKeyEnabled, forKey: "replaceHotKeyEnabled") }
-    }
-
     @Published var replaceHotKeyCode: UInt32 {
         didSet { UserDefaults.standard.set(replaceHotKeyCode, forKey: "replaceHotKeyCode") }
     }
@@ -71,56 +55,25 @@ class SettingsManager: ObservableObject {
 
         let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "gpt-5.2"
         let provider = AIProviderType(rawValue: providerRaw) ?? .openai
-        let validModels: [String]
-        switch provider {
-        case .claude: validModels = ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1", "claude-sonnet-4-0", "claude-opus-4-0"]
-        case .openai: validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5.2-pro", "o4-mini", "o3-mini", "o3", "o1", "gpt-4-turbo"]
-        case .gemini: validModels = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-2.0-flash"]
-        }
-        self.selectedModel = validModels.contains(savedModel) ? savedModel : validModels[0]
+        let validModels = ModelConfigManager.shared.modelsForProvider(provider)
+        self.selectedModel = validModels.contains(savedModel) ? savedModel : (validModels.first ?? savedModel)
+
         let launchDefault = UserDefaults.standard.object(forKey: "launchAtLogin")
         self.launchAtLogin = launchDefault != nil ? UserDefaults.standard.bool(forKey: "launchAtLogin") : true
 
-        let hotKeyDefault = UserDefaults.standard.object(forKey: "hotKeyEnabled")
-        self.hotKeyEnabled = hotKeyDefault != nil ? UserDefaults.standard.bool(forKey: "hotKeyEnabled") : true
-
-        let savedKeyCode = UserDefaults.standard.object(forKey: "hotKeyCode")
-        self.hotKeyCode = savedKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyCode")) : 11 // 'b'
-
-        let savedModifiers = UserDefaults.standard.object(forKey: "hotKeyModifiers")
-        self.hotKeyModifiers = savedModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "hotKeyModifiers")) : UInt32(cmdKey)
-
-        let replaceEnabledDefault = UserDefaults.standard.object(forKey: "replaceHotKeyEnabled")
-        self.replaceHotKeyEnabled = replaceEnabledDefault != nil ? UserDefaults.standard.bool(forKey: "replaceHotKeyEnabled") : true
-
         let savedReplaceKeyCode = UserDefaults.standard.object(forKey: "replaceHotKeyCode")
-        self.replaceHotKeyCode = savedReplaceKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "replaceHotKeyCode")) : 50 // '`'
+        self.replaceHotKeyCode = savedReplaceKeyCode != nil ? UInt32(UserDefaults.standard.integer(forKey: "replaceHotKeyCode")) : 50
 
         let savedReplaceModifiers = UserDefaults.standard.object(forKey: "replaceHotKeyModifiers")
         self.replaceHotKeyModifiers = savedReplaceModifiers != nil ? UInt32(UserDefaults.standard.integer(forKey: "replaceHotKeyModifiers")) : UInt32(cmdKey)
     }
 
     func modelsForProvider(_ provider: AIProviderType) -> [String] {
-        switch provider {
-        case .claude:
-            return ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1", "claude-sonnet-4-0", "claude-opus-4-0"]
-        case .openai:
-            return ["gpt-4o-mini", "gpt-4o", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "gpt-5", "gpt-5.1", "gpt-5.2", "gpt-5.2-pro", "o4-mini", "o3-mini", "o3", "o1", "gpt-4-turbo"]
-        case .gemini:
-            return ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-2.0-flash"]
-        }
+        return ModelConfigManager.shared.modelsForProvider(provider)
     }
 
     func defaultModel(for provider: AIProviderType) -> String {
-        switch provider {
-        case .claude: return "claude-sonnet-4-6"
-        case .openai: return "gpt-5.2"
-        case .gemini: return "gemini-2.5-flash"
-        }
-    }
-
-    var shortcutDisplayString: String {
-        return Self.shortcutString(keyCode: hotKeyCode, modifiers: hotKeyModifiers)
+        return ModelConfigManager.shared.defaultModel(for: provider)
     }
 
     var replaceShortcutDisplayString: String {

@@ -15,6 +15,8 @@ struct SettingsView: View {
                 .tabItem { Label("API Keys", systemImage: "key") }
             ProviderTab()
                 .tabItem { Label("Provider", systemImage: "cpu") }
+            StatsTab()
+                .tabItem { Label("Statistics", systemImage: "chart.bar") }
             HistoryTab()
                 .tabItem { Label("History", systemImage: "clock") }
             LogsTab()
@@ -22,7 +24,7 @@ struct SettingsView: View {
             AboutTab()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 500, height: 420)
+        .frame(width: 580, height: 440)
         .environmentObject(settings)
         .environmentObject(aiManager)
         .environmentObject(historyManager)
@@ -35,30 +37,10 @@ struct GeneralTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Clipboard Mode").font(.headline)
-            Text("Polish clipboard contents. Copy text first, then use this shortcut.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Toggle("Enabled", isOn: $settings.hotKeyEnabled)
-
-            HStack {
-                Text("Shortcut:")
-                ShortcutRecorderView(
-                    keyCode: $settings.hotKeyCode,
-                    modifiers: $settings.hotKeyModifiers
-                )
-                .frame(width: 140, height: 24)
-            }
-
-            Divider()
-
             Text("Replace Mode").font(.headline)
             Text("Select text in any app, press the shortcut, and it gets polished in-place.")
                 .font(.caption)
                 .foregroundColor(.secondary)
-
-            Toggle("Enabled", isOn: $settings.replaceHotKeyEnabled)
 
             HStack {
                 Text("Shortcut:")
@@ -238,6 +220,140 @@ class ShortcutRecorderNSView: NSView {
     }
 
     override var acceptsFirstResponder: Bool { true }
+}
+
+struct StatsTab: View {
+    @ObservedObject var stats = StatsManager.shared
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 8) {
+                statCard(title: "Polishes", value: "\(stats.totalPolishes)", icon: "wand.and.stars")
+                statCard(title: "Chars In", value: formatNumber(stats.totalCharsInput), icon: "text.cursor")
+                statCard(title: "Chars Out", value: formatNumber(stats.totalCharsOutput), icon: "doc.text")
+                statCard(title: "Avg Time", value: String(format: "%.1fs", stats.averageTimePerPolish), icon: "clock")
+            }
+
+            Divider()
+            Text("Per Model").font(.subheadline).fontWeight(.medium)
+
+            if stats.modelStats.isEmpty {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 4) {
+                        Image(systemName: "chart.bar")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                        Text("No data yet")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("Polish some text to see per-model stats")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            } else {
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 0) {
+                            Text("Model").font(.system(size: 10, weight: .semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text("Polishes").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 55, alignment: .trailing)
+                            Text("Chars In").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 60, alignment: .trailing)
+                            Text("Chars Out").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 60, alignment: .trailing)
+                            Text("Avg Time").font(.system(size: 10, weight: .semibold))
+                                .frame(width: 58, alignment: .trailing)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(nsColor: .controlBackgroundColor))
+
+                        ForEach(stats.sortedModels, id: \.model) { item in
+                            HStack(spacing: 0) {
+                                Text(item.model).font(.system(size: 10))
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("\(item.stats.polishes)").font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 55, alignment: .trailing)
+                                Text(formatNumber(item.stats.charsInput)).font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 60, alignment: .trailing)
+                                Text(formatNumber(item.stats.charsOutput)).font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 60, alignment: .trailing)
+                                Text(String(format: "%.1fs", item.stats.averageTime)).font(.system(size: 10, design: .monospaced))
+                                    .frame(width: 58, alignment: .trailing)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+
+                            Divider().padding(.horizontal, 8)
+                        }
+                    }
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+                    .cornerRadius(6)
+                }
+            }
+
+            Spacer()
+
+            HStack {
+                if let firstUse = stats.firstUseDate {
+                    Text("Since \(Self.dateFormatter.string(from: firstUse))")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Reset Statistics") {
+                    stats.resetAll()
+                }
+                .font(.caption)
+            }
+        }
+        .padding()
+    }
+
+    @ViewBuilder
+    private func statCard(title: String, value: String, icon: String) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.accentColor)
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+            Text(title)
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(6)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(8)
+    }
+
+    private func formatNumber(_ n: Int) -> String {
+        if n >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
+        if n >= 1_000 { return String(format: "%.1fK", Double(n) / 1_000) }
+        return "\(n)"
+    }
 }
 
 struct HistoryTab: View {
@@ -483,6 +599,7 @@ struct APIKeysTab: View {
 struct ProviderTab: View {
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var aiManager: AIManager
+    @ObservedObject var modelConfig = ModelConfigManager.shared
 
     private var hasKey: Bool {
         switch settings.selectedProvider {
@@ -505,7 +622,7 @@ struct ProviderTab: View {
             }
 
             Picker("Model", selection: $settings.selectedModel) {
-                ForEach(settings.modelsForProvider(settings.selectedProvider), id: \.self) { model in
+                ForEach(modelConfig.modelsForProvider(settings.selectedProvider), id: \.self) { model in
                     Text(model).tag(model)
                 }
             }
@@ -522,6 +639,17 @@ struct ProviderTab: View {
                     Image(systemName: hasKey ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(hasKey ? .green : .red)
                     Text(hasKey ? "API key configured" : "No API key - set in API Keys tab")
+                }
+            }
+
+            HStack {
+                Spacer()
+                Button(action: { modelConfig.forceRefresh() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Refresh Models")
+                    }
+                    .font(.caption)
                 }
             }
 

@@ -12,10 +12,6 @@ class SystemPromptManager: ObservableObject {
     """
 
     private let userPromptKey = "userSystemPrompt"
-    private let gcsURL = "https://storage.googleapis.com/polisher-config/system-prompt.txt"
-    private let cacheKey = "cachedSystemPrompt"
-    private let lastFetchKey = "lastPromptFetch"
-    private let refreshInterval: TimeInterval = 3600
     private var cancellable: AnyCancellable?
 
     @Published var customPrompt: String
@@ -24,8 +20,8 @@ class SystemPromptManager: ObservableObject {
         if !customPrompt.isEmpty {
             return customPrompt
         }
-        if let cached = UserDefaults.standard.string(forKey: cacheKey), !cached.isEmpty {
-            return cached
+        if let remote = ModelConfigManager.shared.remoteSystemPrompt, !remote.isEmpty {
+            return remote
         }
         return Self.defaultPrompt
     }
@@ -41,34 +37,14 @@ class SystemPromptManager: ObservableObject {
     }
 
     func resetToDefault() {
-        customPrompt = Self.defaultPrompt
+        if let remote = ModelConfigManager.shared.remoteSystemPrompt, !remote.isEmpty {
+            customPrompt = remote
+        } else {
+            customPrompt = Self.defaultPrompt
+        }
     }
 
     func refreshIfNeeded() {
-        let lastFetch = UserDefaults.standard.double(forKey: lastFetchKey)
-        let now = Date().timeIntervalSince1970
-
-        if now - lastFetch > refreshInterval {
-            Task { await fetchFromGCS() }
-        }
-    }
-
-    private func fetchFromGCS() async {
-        guard let url = URL(string: gcsURL) else { return }
-
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200,
-                  let prompt = String(data: data, encoding: .utf8),
-                  !prompt.isEmpty else {
-                return
-            }
-
-            UserDefaults.standard.set(prompt.trimmingCharacters(in: .whitespacesAndNewlines), forKey: cacheKey)
-            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: lastFetchKey)
-        } catch {
-            // GCS fetch failed - use cached/default prompt
-        }
+        ModelConfigManager.shared.refreshIfNeeded()
     }
 }

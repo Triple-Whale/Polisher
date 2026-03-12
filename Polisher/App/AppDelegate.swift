@@ -77,6 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         SystemPromptManager.shared.refreshIfNeeded()
+        ModelConfigManager.shared.refreshIfNeeded()
 
         setupProcessingIndicator()
         setupShortcutObserver()
@@ -109,17 +110,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupShortcutObserver() {
-        Publishers.CombineLatest(
-            settingsManager.$hotKeyCode,
-            settingsManager.$hotKeyModifiers
-        )
-        .dropFirst()
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] _, _ in
-            self?.globalHotKey.reregister()
-        }
-        .store(in: &cancellables)
-
         Publishers.CombineLatest(
             settingsManager.$replaceHotKeyCode,
             settingsManager.$replaceHotKeyModifiers
@@ -216,7 +206,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(historyManager)
 
         let window = EditableWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 440),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
