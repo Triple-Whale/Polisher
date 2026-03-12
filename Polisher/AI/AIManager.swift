@@ -27,7 +27,7 @@ class AIManager: ObservableObject {
         }
     }
 
-    func improveText(_ text: String, provider: AIProviderType? = nil) async throws -> String {
+    func improveText(_ text: String, provider: AIProviderType? = nil) async throws -> AIResult {
         await MainActor.run { isProcessing = true }
         defer { Task { @MainActor in isProcessing = false } }
 
@@ -55,9 +55,10 @@ class AIManager: ObservableObject {
         }
 
         let result = try await aiProvider.improveText(inputText, systemPrompt: systemPrompt)
-        return result
+        let cleanedText = result.text
             .replacingOccurrences(of: "\u{2014}", with: "-")
             .replacingOccurrences(of: "\u{2013}", with: "-")
             .replacingOccurrences(of: "--", with: "-")
+        return AIResult(text: cleanedText, inputTokens: result.inputTokens, outputTokens: result.outputTokens)
     }
 }

@@ -17,7 +17,7 @@ class GeminiProvider: AIProvider {
         self.model = model
     }
 
-    func improveText(_ text: String, systemPrompt: String) async throws -> String {
+    func improveText(_ text: String, systemPrompt: String) async throws -> AIResult {
         guard !apiKey.isEmpty else { throw AIError.noAPIKey }
 
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)")!
@@ -63,6 +63,17 @@ class GeminiProvider: AIProvider {
             throw AIError.invalidResponse
         }
 
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var inputTokens = 0
+        var outputTokens = 0
+        if let usage = json["usageMetadata"] as? [String: Any] {
+            inputTokens = usage["promptTokenCount"] as? Int ?? 0
+            outputTokens = usage["candidatesTokenCount"] as? Int ?? 0
+        }
+
+        return AIResult(
+            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+            inputTokens: inputTokens,
+            outputTokens: outputTokens
+        )
     }
 }

@@ -12,6 +12,7 @@ class ModelConfigManager: ObservableObject {
     @Published var models: [String: [String]] = [:]
     @Published var defaults: [String: String] = [:]
     @Published var remoteSystemPrompt: String?
+    @Published var pricing: [String: ModelPricing] = [:]
 
     private static let fallbackModels: [String: [String]] = [
         "Claude": ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001", "claude-sonnet-4-5", "claude-opus-4-5", "claude-opus-4-1", "claude-sonnet-4-0", "claude-opus-4-0"],
@@ -61,6 +62,12 @@ class ModelConfigManager: ObservableObject {
         models = config.models
         defaults = config.defaults
         remoteSystemPrompt = config.systemPrompt
+        pricing = config.pricing ?? [:]
+    }
+
+    func costForModel(_ model: String, inputTokens: Int, outputTokens: Int) -> Double {
+        guard let p = pricing[model] else { return 0 }
+        return (Double(inputTokens) / 1_000_000 * p.input) + (Double(outputTokens) / 1_000_000 * p.output)
     }
 
     private func fetchFromGCS() async {
@@ -83,6 +90,7 @@ class ModelConfigManager: ObservableObject {
                 self.models = config.models
                 self.defaults = config.defaults
                 self.remoteSystemPrompt = config.systemPrompt
+                self.pricing = config.pricing ?? [:]
                 LogManager.shared.log(.success, category: "Models", "Loaded \(config.models.values.flatMap { $0 }.count) models from GCS")
             }
         } catch {
@@ -91,8 +99,14 @@ class ModelConfigManager: ObservableObject {
     }
 }
 
+struct ModelPricing: Codable {
+    let input: Double
+    let output: Double
+}
+
 struct ModelsConfig: Codable {
     let models: [String: [String]]
     let defaults: [String: String]
     let systemPrompt: String?
+    let pricing: [String: ModelPricing]?
 }

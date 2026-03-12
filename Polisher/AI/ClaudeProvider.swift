@@ -17,7 +17,7 @@ class ClaudeProvider: AIProvider {
         self.model = model
     }
 
-    func improveText(_ text: String, systemPrompt: String) async throws -> String {
+    func improveText(_ text: String, systemPrompt: String) async throws -> AIResult {
         guard !apiKey.isEmpty else { throw AIError.noAPIKey }
 
         let url = URL(string: "https://api.anthropic.com/v1/messages")!
@@ -59,6 +59,17 @@ class ClaudeProvider: AIProvider {
             throw AIError.invalidResponse
         }
 
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var inputTokens = 0
+        var outputTokens = 0
+        if let usage = json["usage"] as? [String: Any] {
+            inputTokens = usage["input_tokens"] as? Int ?? 0
+            outputTokens = usage["output_tokens"] as? Int ?? 0
+        }
+
+        return AIResult(
+            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+            inputTokens: inputTokens,
+            outputTokens: outputTokens
+        )
     }
 }

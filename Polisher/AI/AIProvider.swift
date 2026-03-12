@@ -6,10 +6,16 @@ enum AIProviderType: String, CaseIterable, Codable {
     case gemini = "Gemini"
 }
 
+struct AIResult {
+    let text: String
+    let inputTokens: Int
+    let outputTokens: Int
+}
+
 protocol AIProvider {
     var providerType: AIProviderType { get }
     var availableModels: [String] { get }
-    func improveText(_ text: String, systemPrompt: String) async throws -> String
+    func improveText(_ text: String, systemPrompt: String) async throws -> AIResult
 }
 
 enum AIError: LocalizedError {
