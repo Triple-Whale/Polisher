@@ -2,14 +2,7 @@ import Foundation
 
 class GeminiProvider: AIProvider {
     let providerType: AIProviderType = .gemini
-    let availableModels = [
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-pro",
-        "gemini-3-flash-preview",
-        "gemini-3.1-pro-preview",
-        "gemini-2.0-flash",
-    ]
+    let availableModels: [String] = []
 
     private var apiKey: String
     private var model: String
@@ -31,7 +24,7 @@ class GeminiProvider: AIProvider {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 60
 
         let body: [String: Any] = [
             "systemInstruction": [

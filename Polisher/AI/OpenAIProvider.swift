@@ -2,27 +2,12 @@ import Foundation
 
 class OpenAIProvider: AIProvider {
     let providerType: AIProviderType = .openai
-    let availableModels = [
-        "gpt-4o-mini",
-        "gpt-4o",
-        "gpt-4.1-nano",
-        "gpt-4.1-mini",
-        "gpt-4.1",
-        "gpt-5",
-        "gpt-5.1",
-        "gpt-5.2",
-        "gpt-5.2-pro",
-        "o4-mini",
-        "o3-mini",
-        "o3",
-        "o1",
-        "gpt-4-turbo",
-    ]
+    let availableModels: [String] = []
 
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "gpt-4o-mini") {
+    init(apiKey: String, model: String = "gpt-5.4") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -30,6 +15,24 @@ class OpenAIProvider: AIProvider {
     func configure(apiKey: String, model: String) {
         self.apiKey = apiKey
         self.model = model
+    }
+
+    private var isReasoningModel: Bool {
+        if model.hasPrefix("o1") || model.hasPrefix("o3") || model.hasPrefix("o4") {
+            return true
+        }
+        if model.hasSuffix("-pro") {
+            return true
+        }
+        let noTempModels = ["gpt-5", "gpt-5.1", "gpt-5-mini", "gpt-5-nano"]
+        if noTempModels.contains(model) {
+            return true
+        }
+        return false
+    }
+
+    private var usesLegacyMaxTokens: Bool {
+        return model.hasPrefix("gpt-4o") || model.hasPrefix("gpt-4-")
     }
 
     func improveText(_ text: String, systemPrompt: String) async throws -> String {
@@ -40,20 +43,22 @@ class OpenAIProvider: AIProvider {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 60
 
-        let usesLegacyMaxTokens = model.hasPrefix("gpt-4o") || model.hasPrefix("gpt-4-")
         let tokensKey = usesLegacyMaxTokens ? "max_tokens" : "max_completion_tokens"
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
-            "temperature": 0.3,
             tokensKey: 4096,
             "messages": [
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": text]
             ]
         ]
+
+        if !isReasoningModel {
+            body["temperature"] = 0.3
+        }
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
