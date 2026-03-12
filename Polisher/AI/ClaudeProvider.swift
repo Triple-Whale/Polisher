@@ -2,21 +2,12 @@ import Foundation
 
 class ClaudeProvider: AIProvider {
     let providerType: AIProviderType = .claude
-    let availableModels = [
-        "claude-sonnet-4-6",
-        "claude-opus-4-6",
-        "claude-haiku-4-5-20251001",
-        "claude-sonnet-4-5",
-        "claude-opus-4-5",
-        "claude-opus-4-1",
-        "claude-sonnet-4-0",
-        "claude-opus-4-0",
-    ]
+    let availableModels: [String] = []
 
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "claude-sonnet-4-6") {
+    init(apiKey: String, model: String = "claude-opus-4-6") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -35,7 +26,7 @@ class ClaudeProvider: AIProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 60
 
         let body: [String: Any] = [
             "model": model,
