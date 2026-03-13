@@ -51,8 +51,7 @@ if security find-identity -v -p codesigning | grep -q "$SIGNING_IDENTITY"; then
 else
     echo ""
     echo "==> WARNING: Signing identity '$SIGNING_IDENTITY' not found, skipping code signing."
-    echo "    To set up signing, run: gsutil cp gs://polisher-config/polisher-signing.p12 /tmp/ && \\"
-    echo "    security import /tmp/polisher-signing.p12 -k ~/Library/Keychains/login.keychain-db -P polisher123 -T /usr/bin/codesign"
+    echo "    To set up signing, see the README for certificate setup instructions."
 fi
 
 echo ""
