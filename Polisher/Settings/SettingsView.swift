@@ -63,7 +63,7 @@ struct GeneralTab: View {
                     promptManager.resetToDefault()
                 }
                 .font(.caption)
-                .disabled(promptManager.customPrompt == SystemPromptManager.defaultPrompt)
+                .disabled(promptManager.customPrompt == promptManager.defaultPrompt)
             }
 
             TextEditor(text: $promptManager.customPrompt)

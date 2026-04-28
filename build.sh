@@ -5,6 +5,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SRC_DIR="$PROJECT_DIR/Polisher"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_BUNDLE="$BUILD_DIR/Polisher.app"
+export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/tmp/polisher-clang-cache}"
 
 echo "==> Cleaning build directory..."
 rm -rf "$BUILD_DIR"
@@ -36,6 +37,7 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 cp "$BUILD_DIR/Polisher" "$APP_BUNDLE/Contents/MacOS/Polisher"
 cp "$SRC_DIR/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 cp "$SRC_DIR/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+cp "$PROJECT_DIR/models.json" "$APP_BUNDLE/Contents/Resources/models.json"
 
 echo "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 

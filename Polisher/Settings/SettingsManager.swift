@@ -53,10 +53,11 @@ class SettingsManager: ObservableObject {
         let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? AIProviderType.openai.rawValue
         self.selectedProvider = AIProviderType(rawValue: providerRaw) ?? .openai
 
-        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "gpt-5.2"
         let provider = AIProviderType(rawValue: providerRaw) ?? .openai
         let validModels = ModelConfigManager.shared.modelsForProvider(provider)
-        self.selectedModel = validModels.contains(savedModel) ? savedModel : (validModels.first ?? savedModel)
+        let defaultModel = ModelConfigManager.shared.defaultModel(for: provider)
+        let savedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? defaultModel
+        self.selectedModel = validModels.contains(savedModel) ? savedModel : defaultModel
 
         let launchDefault = UserDefaults.standard.object(forKey: "launchAtLogin")
         self.launchAtLogin = launchDefault != nil ? UserDefaults.standard.bool(forKey: "launchAtLogin") : true

@@ -7,7 +7,7 @@ class GeminiProvider: AIProvider {
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "gemini-2.5-flash") {
+    init(apiKey: String, model: String = "") {
         self.apiKey = apiKey
         self.model = model
     }

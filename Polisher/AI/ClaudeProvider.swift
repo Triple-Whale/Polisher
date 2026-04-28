@@ -7,7 +7,7 @@ class ClaudeProvider: AIProvider {
     private var apiKey: String
     private var model: String
 
-    init(apiKey: String, model: String = "claude-opus-4-6") {
+    init(apiKey: String, model: String = "") {
         self.apiKey = apiKey
         self.model = model
     }

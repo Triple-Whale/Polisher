@@ -31,7 +31,7 @@ A floating "Polishing..." indicator appears near your cursor while processing.
 
 **API Keys** - Add keys for Claude, OpenAI, or Gemini. Each has a "Get API Key" link to the provider's console.
 
-**Provider** - Choose your AI provider and model. Supports all current models including GPT-5.2, Claude Sonnet 4.6, Gemini 2.5 Pro, and more.
+**Provider** - Choose your AI provider and model. Supports all current models including GPT-5.5, Claude Opus 4.7, Gemini 3.1 Pro, and more.
 
 **History** - Browse and search your last 20 improvements. Click to expand and see original vs improved text.
 
