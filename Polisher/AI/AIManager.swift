@@ -31,8 +31,12 @@ class AIManager: ObservableObject {
         await MainActor.run { isProcessing = true }
         defer { Task { @MainActor in isProcessing = false } }
 
-        let inputText = text
-        let systemPrompt = SystemPromptManager.shared.currentPrompt
+        let request = KeyboardLayoutRecovery.prepare(
+            text: text,
+            systemPrompt: SystemPromptManager.shared.currentPrompt
+        )
+        let inputText = request.inputText
+        let systemPrompt = request.systemPrompt
         let promptPreview = String(systemPrompt.prefix(80)).replacingOccurrences(of: "\n", with: " ")
         LogManager.shared.log(.info, category: "Prompt", "Using: \"\(promptPreview)...\" (\(systemPrompt.count) chars)")
         guard systemPrompt.count >= 30 else {
