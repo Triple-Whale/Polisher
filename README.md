@@ -8,6 +8,8 @@ macOS menu bar app that polishes your text using AI.
 brew install --cask Triple-Whale/tap/polisher
 ```
 
+Full walkthrough (install, permissions, API keys, troubleshooting): [Polisher Setup Guide](https://pages.app.triplewhale.com/Ezkfx6DVzFI0)
+
 ## Setup
 
 1. Open Polisher from Applications (wand icon appears in menu bar)
