@@ -1,32 +1,47 @@
 import Cocoa
 
 class ClipboardManager {
-    private var savedContents: [NSPasteboard.PasteboardType: Data] = [:]
-    private let pasteboard = NSPasteboard.general
+    private var savedContents: [[NSPasteboard.PasteboardType: Data]]?
+    private let pasteboard: NSPasteboard
+
+    init(pasteboard: NSPasteboard = .general) {
+        self.pasteboard = pasteboard
+    }
+
+    var changeCount: Int { pasteboard.changeCount }
 
     func save() {
-        savedContents.removeAll()
-        guard let items = pasteboard.pasteboardItems else { return }
-
-        for item in items {
+        savedContents = (pasteboard.pasteboardItems ?? []).map { item in
+            var contents: [NSPasteboard.PasteboardType: Data] = [:]
             for type in item.types {
                 if let data = item.data(forType: type) {
-                    savedContents[type] = data
+                    contents[type] = data
                 }
             }
+            return contents
         }
     }
 
-    func restore() {
-        guard !savedContents.isEmpty else { return }
+    func restore(ifUnchangedSince changeCount: Int) {
+        guard let savedContents else { return }
+        self.savedContents = nil
+        guard pasteboard.changeCount == changeCount else { return }
 
         pasteboard.clearContents()
-        let item = NSPasteboardItem()
-        for (type, data) in savedContents {
-            item.setData(data, forType: type)
+        let items = savedContents.map { contents in
+            let item = NSPasteboardItem()
+            for (type, data) in contents {
+                item.setData(data, forType: type)
+            }
+            return item
         }
-        pasteboard.writeObjects([item])
-        savedContents.removeAll()
+        if !items.isEmpty {
+            pasteboard.writeObjects(items)
+        }
+    }
+
+    func clear() {
+        pasteboard.clearContents()
     }
 
     func getText() -> String? {

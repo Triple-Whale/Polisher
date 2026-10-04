@@ -58,8 +58,14 @@ class GeminiProvider: AIProvider {
               let firstCandidate = candidates.first,
               let content = firstCandidate["content"] as? [String: Any],
               let parts = content["parts"] as? [[String: Any]],
-              let firstPart = parts.first,
-              let text = firstPart["text"] as? String else {
+              firstCandidate["finishReason"] as? String != "MAX_TOKENS" else {
+            throw AIError.invalidResponse
+        }
+        let text = parts.compactMap { part -> String? in
+            guard part["thought"] as? Bool != true else { return nil }
+            return part["text"] as? String
+        }.joined()
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AIError.invalidResponse
         }
 

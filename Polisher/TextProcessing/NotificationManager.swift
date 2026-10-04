@@ -3,6 +3,17 @@ import SwiftUI
 
 class NotificationManager {
     private var hudWindow: NSWindow?
+    private var dismissWorkItem: DispatchWorkItem?
+
+    func showMessage(_ message: String) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.showHUD(message: message, isLoading: false)
+            let workItem = DispatchWorkItem { [weak self] in self?.dismissHUD() }
+            self.dismissWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: workItem)
+        }
+    }
 
     func setLoadingIcon() {
         DispatchQueue.main.async { [weak self] in
@@ -35,18 +46,19 @@ class NotificationManager {
         }
     }
 
-    private func showHUD() {
+    private func showHUD(message: String = "Polishing...", isLoading: Bool = true) {
         dismissHUD()
 
         let mouseLocation = NSEvent.mouseLocation
-        let hudView = NSHostingView(rootView: PolishingHUDView())
-        hudView.frame = NSRect(x: 0, y: 0, width: 160, height: 44)
+        let hudView = NSHostingView(rootView: PolishingHUDView(message: message, isLoading: isLoading))
+        let width = max(160, hudView.fittingSize.width)
+        hudView.frame = NSRect(x: 0, y: 0, width: width, height: 44)
 
         let window = NSPanel(
             contentRect: NSRect(
                 x: mouseLocation.x + 16,
                 y: mouseLocation.y - 52,
-                width: 160,
+                width: width,
                 height: 44
             ),
             styleMask: [.nonactivatingPanel],
@@ -65,25 +77,30 @@ class NotificationManager {
     }
 
     private func dismissHUD() {
+        dismissWorkItem?.cancel()
+        dismissWorkItem = nil
         hudWindow?.orderOut(nil)
         hudWindow = nil
     }
 }
 
 struct PolishingHUDView: View {
+    let message: String
+    let isLoading: Bool
     @State private var rotation: Double = 0
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "arrow.trianglehead.2.clockwise")
+            Image(systemName: isLoading ? "arrow.trianglehead.2.clockwise" : "text.cursor")
                 .font(.system(size: 16))
                 .rotationEffect(.degrees(rotation))
                 .onAppear {
+                    guard isLoading else { return }
                     withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
                         rotation = 360
                     }
                 }
-            Text("Polishing...")
+            Text(message)
                 .font(.system(size: 13, weight: .medium))
         }
         .foregroundColor(.white)

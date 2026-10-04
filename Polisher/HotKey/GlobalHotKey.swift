@@ -11,6 +11,8 @@ class GlobalHotKey {
     private var eventHandlerRef: EventHandlerRef?
     private static var instance: GlobalHotKey?
     private let log = LogManager.shared
+    private var isReplacing = false
+    var isProcessing: Bool { isReplacing }
 
     init(aiManager: AIManager, settingsManager: SettingsManager, notificationManager: NotificationManager, historyManager: HistoryManager) {
         self.aiManager = aiManager
@@ -74,17 +76,23 @@ class GlobalHotKey {
     }
 
     private func handleReplaceHotKey() {
+        guard !isReplacing else { return }
         guard Self.checkAccessibility() else { return }
+        isReplacing = true
 
         log.log(.info, category: "HotKey", "Replace shortcut triggered, capturing selected text...")
 
-        guard let selectedText = textReplacer.captureSelectedText(), !selectedText.isEmpty else {
-            log.log(.error, category: "Capture", "No text selected")
-            notificationManager.restoreIcon()
-            return
-        }
+        Task { @MainActor in
+            defer { isReplacing = false }
+            let sourceApp = NSWorkspace.shared.frontmostApplication?.processIdentifier
+            guard let selectedText = await textReplacer.captureSelectedText() else {
+                log.log(.info, category: "Capture", "No text selected")
+                notificationManager.showMessage("Please select a text")
+                return
+            }
 
-        processText(selectedText)
+            await processText(selectedText, sourceApp: sourceApp)
+        }
     }
 
     private static func checkAccessibility() -> Bool {
@@ -109,7 +117,8 @@ class GlobalHotKey {
         return trusted
     }
 
-    private func processText(_ text: String) {
+    @MainActor
+    private func processText(_ text: String, sourceApp: pid_t?) async {
         let charCount = text.count
         let preview = String(text.prefix(80)).replacingOccurrences(of: "\n", with: " ")
         log.log(.info, category: "Capture", "Read \(charCount) chars: \"\(preview)\(charCount > 80 ? "..." : "")\"")
@@ -123,37 +132,40 @@ class GlobalHotKey {
         let history = historyManager
         let startTime = Date()
 
-        Task {
-            do {
-                let result = try await aiManager.improveText(text)
-                let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
-                let elapsedSeconds = Date().timeIntervalSince(startTime)
-                log.log(.success, category: "API", "Response received in \(elapsed) (\(result.text.count) chars, \(result.inputTokens)+\(result.outputTokens) tokens)")
+        do {
+            let result = try await aiManager.improveText(text)
+            let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
+            let elapsedSeconds = Date().timeIntervalSince(startTime)
+            log.log(.success, category: "API", "Response received in \(elapsed) (\(result.text.count) chars, \(result.inputTokens)+\(result.outputTokens) tokens)")
 
-                await MainActor.run {
-                    history.addEntry(original: text, improved: result.text)
-                    StatsManager.shared.recordPolish(
-                        inputChars: text.count,
-                        outputChars: result.text.count,
-                        elapsedSeconds: elapsedSeconds,
-                        provider: provider,
-                        model: model,
-                        inputTokens: result.inputTokens,
-                        outputTokens: result.outputTokens
-                    )
-
-                    textReplacer.replaceSelectedText(with: result.text)
-                    log.log(.success, category: "Output", "Replaced selected text (\(result.text.count) chars)")
-
-                    notificationManager.restoreIcon()
-                }
-            } catch {
-                let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
-                log.log(.error, category: "API", "Failed after \(elapsed): \(error.localizedDescription)")
-                await MainActor.run {
-                    notificationManager.restoreIcon()
-                }
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == sourceApp else {
+                notificationManager.restoreIcon()
+                notificationManager.showMessage("Return to your text and try again")
+                return
             }
+            if let currentSelection = TextReplacer.accessibilitySelection(), currentSelection != text {
+                notificationManager.restoreIcon()
+                notificationManager.showMessage("Select your text and try again")
+                return
+            }
+            history.addEntry(original: text, improved: result.text)
+            StatsManager.shared.recordPolish(
+                inputChars: text.count,
+                outputChars: result.text.count,
+                elapsedSeconds: elapsedSeconds,
+                provider: provider,
+                model: model,
+                inputTokens: result.inputTokens,
+                outputTokens: result.outputTokens
+            )
+
+            await textReplacer.replaceSelectedText(with: result.text)
+            log.log(.success, category: "Output", "Replaced selected text (\(result.text.count) chars)")
+            notificationManager.restoreIcon()
+        } catch {
+            let elapsed = String(format: "%.1fs", Date().timeIntervalSince(startTime))
+            log.log(.error, category: "API", "Failed after \(elapsed): \(error.localizedDescription)")
+            notificationManager.restoreIcon()
         }
     }
 }
