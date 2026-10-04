@@ -15,13 +15,15 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.3</string>
+    <string>3.4</string>
     <key>CFBundleVersion</key>
-    <string>26</string>
+    <string>28</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>PolisherUpdatePublicKey</key>
+    <string>x/eS998eYa5foMVSyW1qQTspBs5C4ZtTyb6bWEb5FZY=</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSServices</key>

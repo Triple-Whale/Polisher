@@ -15,8 +15,9 @@ class ServicesProvider: NSObject {
     }
 
     @objc func improveText(_ pboard: NSPasteboard, userData: String, error: AutoreleasingUnsafeMutablePointer<NSString>) {
-        guard let text = pboard.string(forType: .string), !text.isEmpty else {
-            error.pointee = "No text on clipboard" as NSString
+        guard let text = pboard.string(forType: .string), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            error.pointee = "Please select a text" as NSString
+            notificationManager.showMessage("Please select a text")
             return
         }
 

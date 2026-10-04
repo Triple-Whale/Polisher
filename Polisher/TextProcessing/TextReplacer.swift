@@ -2,37 +2,70 @@ import Cocoa
 import Carbon
 
 class TextReplacer {
-    private let clipboardManager = ClipboardManager()
+    private let clipboardManager: ClipboardManager
+    private let readSelection: () -> String?
+    private let copySelection: () -> Void
 
-    func captureSelectedText() -> String? {
-        clipboardManager.save()
-        simulateCopy()
-        usleep(150_000) // 150ms for clipboard to populate
-        let text = clipboardManager.getText()
-        return text
+    init(
+        clipboardManager: ClipboardManager = ClipboardManager(),
+        readSelection: @escaping () -> String? = TextReplacer.accessibilitySelection,
+        copySelection: @escaping () -> Void = { TextReplacer.simulateKeyPress(keyCode: 8, flags: .maskCommand) }
+    ) {
+        self.clipboardManager = clipboardManager
+        self.readSelection = readSelection
+        self.copySelection = copySelection
     }
 
-    func replaceSelectedText(with newText: String, restoreClipboard: Bool = true) {
-        clipboardManager.setText(newText)
-        simulatePaste()
-
-        if restoreClipboard {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                self?.clipboardManager.restore()
-            }
+    @MainActor
+    func captureSelectedText() async -> String? {
+        if let text = readSelection() {
+            return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text
         }
+
+        clipboardManager.save()
+        clipboardManager.clear()
+        let emptyChangeCount = clipboardManager.changeCount
+        var restoreChangeCount = emptyChangeCount
+        defer { clipboardManager.restore(ifUnchangedSince: restoreChangeCount) }
+        copySelection()
+
+        for _ in 0..<40 {
+            guard !Task.isCancelled else { return nil }
+            if clipboardManager.changeCount != emptyChangeCount,
+               let text = clipboardManager.getText() {
+                restoreChangeCount = clipboardManager.changeCount
+                return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text
+            }
+            try? await Task.sleep(nanoseconds: 25_000_000)
+        }
+        return nil
     }
 
-    private func simulateCopy() {
-        simulateKeyPress(keyCode: 8, flags: .maskCommand) // Cmd+C
+    @MainActor
+    func replaceSelectedText(with newText: String) async {
+        clipboardManager.save()
+        clipboardManager.setText(newText)
+        let pasteChangeCount = clipboardManager.changeCount
+        Self.simulateKeyPress(keyCode: 9, flags: .maskCommand)
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        clipboardManager.restore(ifUnchangedSince: pasteChangeCount)
     }
 
-    private func simulatePaste() {
-        simulateKeyPress(keyCode: 9, flags: .maskCommand) // Cmd+V
+    static func accessibilitySelection() -> String? {
+        let system = AXUIElementCreateSystemWide()
+        var focused: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focused) == .success,
+              let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else { return nil }
+        let element = focused as! AXUIElement
+        var selected: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selected) == .success else {
+            return nil
+        }
+        return selected as? String
     }
 
-    private func simulateKeyPress(keyCode: CGKeyCode, flags: CGEventFlags) {
-        let source = CGEventSource(stateID: .hidSystemState)
+    private static func simulateKeyPress(keyCode: CGKeyCode, flags: CGEventFlags) {
+        let source = CGEventSource(stateID: .privateState)
 
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
               let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false) else {

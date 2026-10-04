@@ -3,3 +3,4 @@ build/
 *.swp
 *.xcuserstate
 DerivedData/
+.build-deps/

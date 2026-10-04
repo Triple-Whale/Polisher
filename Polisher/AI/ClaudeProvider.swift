@@ -28,15 +28,18 @@ class ClaudeProvider: AIProvider {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 60
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "max_tokens": 4096,
-            "temperature": 0.3,
             "system": systemPrompt,
             "messages": [
                 ["role": "user", "content": text]
             ]
         ]
+
+        if ModelConfigManager.shared.optionsForModel(model).supportsTemperature ?? true {
+            body["temperature"] = 0.3
+        }
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -54,8 +57,14 @@ class ClaudeProvider: AIProvider {
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let content = json["content"] as? [[String: Any]],
-              let firstBlock = content.first,
-              let text = firstBlock["text"] as? String else {
+              json["stop_reason"] as? String != "max_tokens" else {
+            throw AIError.invalidResponse
+        }
+        let text = content.compactMap { block -> String? in
+            guard block["type"] as? String == "text" else { return nil }
+            return block["text"] as? String
+        }.joined()
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AIError.invalidResponse
         }
 

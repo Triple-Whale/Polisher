@@ -8,6 +8,20 @@ struct SettingsView: View {
     @ObservedObject var logManager = LogManager.shared
 
     var body: some View {
+        Group {
+            if #available(macOS 15.0, *) {
+                tabs.tabViewStyle(.grouped)
+            } else {
+                tabs
+            }
+        }
+        .frame(width: 580, height: 440)
+        .environmentObject(settings)
+        .environmentObject(aiManager)
+        .environmentObject(historyManager)
+    }
+
+    private var tabs: some View {
         TabView {
             GeneralTab()
                 .tabItem { Label("General", systemImage: "gear") }
@@ -24,10 +38,6 @@ struct SettingsView: View {
             AboutTab()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 580, height: 440)
-        .environmentObject(settings)
-        .environmentObject(aiManager)
-        .environmentObject(historyManager)
     }
 }
 
@@ -827,6 +837,7 @@ struct LogRowView: View {
 }
 
 struct AboutTab: View {
+    @ObservedObject private var updater = UpdateManager.shared
     private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
     private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
 
@@ -847,6 +858,13 @@ struct AboutTab: View {
                 .foregroundColor(.secondary)
 
             Text("AI-powered text polishing from your menu bar")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Button("Check for Updates…", action: updater.checkForUpdates)
+                .disabled(!updater.canCheckForUpdates)
+
+            Text(updater.status)
                 .font(.caption)
                 .foregroundColor(.secondary)
 

@@ -1,0 +1,3 @@
+Polisher can now check for updates automatically and download, install, and relaunch when you choose.
+
+This release also improves selected-text capture after macOS upgrades, shows “Please select a text” when nothing is selected, handles short titles correctly, restores the settings tabs, and adds the latest model options.

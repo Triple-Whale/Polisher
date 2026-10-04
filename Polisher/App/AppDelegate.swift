@@ -78,6 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         SystemPromptManager.shared.refreshIfNeeded()
         ModelConfigManager.shared.refreshIfNeeded()
+        UpdateManager.shared.start()
 
         setupProcessingIndicator()
         setupShortcutObserver()
@@ -180,6 +181,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
+        menu.addItem(UpdateManager.shared.menuItem())
 
         menu.addItem(NSMenuItem.separator())
 
@@ -268,6 +270,7 @@ extension AppDelegate {
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
+        menu.addItem(UpdateManager.shared.menuItem())
 
         menu.addItem(NSMenuItem.separator())
 
