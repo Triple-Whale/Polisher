@@ -39,13 +39,20 @@ struct TextCaptureTests {
         expect(accessibleText == "Selected text" && !copyCalled, "Accessibility selection should bypass copying")
         expect(clipboard.getText() == stalePrompt, "Accessibility capture must leave the clipboard alone")
 
-        for selection in ["", " \n\t"] {
-            let noSelection = TextReplacer(clipboardManager: clipboard, readSelection: { selection }, copySelection: {
-                copyCalled = true
-            })
-            let emptyText = await noSelection.captureSelectedText()
-            expect(emptyText == nil && !copyCalled, "Empty selections must not use old clipboard text")
-        }
+        copyCalled = false
+        let canvasEditor = TextReplacer(clipboardManager: clipboard, readSelection: { nil }, copySelection: {
+            copyCalled = true
+            clipboard.setText("Need to work on ore ownership cross team")
+        })
+        let canvasText = await canvasEditor.captureSelectedText()
+        expect(copyCalled && canvasText == "Need to work on ore ownership cross team", "Missing accessibility selection must fall back to copying")
+        expect(clipboard.getText() == stalePrompt, "Copy fallback must restore the clipboard")
+
+        let blankCopy = TextReplacer(clipboardManager: clipboard, readSelection: { nil }, copySelection: {
+            clipboard.setText(" \n\t")
+        })
+        let blankText = await blankCopy.captureSelectedText()
+        expect(blankText == nil, "A blank copied selection must count as no selection")
 
         clipboard.clear()
         let initiallyEmpty = await delayedCopy.captureSelectedText()

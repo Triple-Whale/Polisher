@@ -1,0 +1,1 @@
+Polisher now captures selected text in Google Docs and other editors that draw text on a canvas, instead of showing “Please select a text”.

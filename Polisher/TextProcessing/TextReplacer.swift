@@ -19,7 +19,7 @@ class TextReplacer {
     @MainActor
     func captureSelectedText() async -> String? {
         if let text = readSelection() {
-            return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text
+            return text
         }
 
         clipboardManager.save()
@@ -58,10 +58,12 @@ class TextReplacer {
               let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else { return nil }
         let element = focused as! AXUIElement
         var selected: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selected) == .success else {
+        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selected) == .success,
+              let text = selected as? String else {
             return nil
         }
-        return selected as? String
+        // Canvas editors such as Google Docs report an empty selection even when text is selected.
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text
     }
 
     private static func simulateKeyPress(keyCode: CGKeyCode, flags: CGEventFlags) {
