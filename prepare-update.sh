@@ -17,6 +17,6 @@ swiftc \
     "$PROJECT_DIR/Polisher/Updates/UpdateRelease.swift" \
     "$PROJECT_DIR/scripts/release-update.swift" \
     -o "$OUTPUT/release-update"
-codesign --force --sign 'Polisher Code Signing' --identifier com.triplewhale.polisher.release-update "$OUTPUT/release-update"
+codesign --force --sign 'Polisher Signing 2026-11' --identifier com.triplewhale.polisher.release-update "$OUTPUT/release-update"
 "$OUTPUT/release-update" prepare "$APP" "$ARCHIVE" "$NOTES" "$OUTPUT/update.json"
 echo "Ready for review in $OUTPUT. No files have been published."

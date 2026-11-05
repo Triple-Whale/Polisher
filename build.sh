@@ -41,8 +41,8 @@ cp "$SRC_DIR/Resources/install-update.sh" "$APP_BUNDLE/Contents/Resources/instal
 
 echo "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
-SIGNING_IDENTITY="Polisher Code Signing"
-if security find-identity -v -p codesigning | grep -q "$SIGNING_IDENTITY"; then
+SIGNING_IDENTITY="Polisher Signing 2026-11"
+if security find-identity -p codesigning | grep -q "$SIGNING_IDENTITY"; then
     echo ""
     echo "==> Code signing with '$SIGNING_IDENTITY'..."
     codesign --force --sign "$SIGNING_IDENTITY" \

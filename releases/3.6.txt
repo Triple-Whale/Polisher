@@ -1,0 +1,1 @@
+Polisher is now signed with new keys. Install this version manually from the DMG; earlier versions cannot update to it automatically. After installing, grant Accessibility again and allow Keychain access when asked.
