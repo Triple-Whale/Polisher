@@ -39,7 +39,7 @@ Create the release key once, with the owner's approval:
 
 ```bash
 swiftc Polisher/Updates/UpdateRelease.swift scripts/release-update.swift -o /tmp/polisher-release-update
-codesign --force --sign 'Polisher Code Signing' --identifier com.triplewhale.polisher.release-update /tmp/polisher-release-update
+codesign --force --sign 'Polisher Signing 2026-11' --identifier com.triplewhale.polisher.release-update /tmp/polisher-release-update
 /tmp/polisher-release-update generate-key
 ```
 
@@ -47,7 +47,7 @@ The private key stays in the login Keychain under service
 `com.triplewhale.polisher.updates`, account `release-signing-key`.
 Put the printed **public** key in `PolisherUpdatePublicKey` in
 `Polisher/Resources/Info.plist`. Keep access to both this key and the existing
-`Polisher Code Signing` certificate; future updates need both identities.
+`Polisher Signing 2026-11` certificate; future updates need both identities.
 Do not generate a new key for each release.
 
 ### Prepare and publish a release

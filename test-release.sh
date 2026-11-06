@@ -11,7 +11,7 @@ cp "$RELEASE_DIR/Polisher.app/Contents/Info.plist" "$TEST_APP/Contents/Info.plis
 /usr/libexec/PlistBuddy -c 'Set CFBundleExecutable ReleaseTests' "$TEST_APP/Contents/Info.plist"
 SOURCES=$(find "$PROJECT_DIR/Polisher" -name '*.swift' ! -name main.swift -type f)
 swiftc -target arm64-apple-macosx14.0 $SOURCES "$PROJECT_DIR/Tests/UpdateApplicationTests.swift" -o "$TEST_APP/Contents/MacOS/ReleaseTests"
-codesign --force --sign 'Polisher Code Signing' --identifier com.triplewhale.polisher --options runtime "$TEST_APP"
+codesign --force --sign 'Polisher Signing 2026-11' --identifier com.triplewhale.polisher --options runtime "$TEST_APP"
 ditto "$RELEASE_DIR/Polisher.app" "$FIXTURE/Tampered.app"
 printf '\nmodified resource\n' >> "$FIXTURE/Tampered.app/Contents/Resources/models.json"
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$TEST_APP/Contents/Info.plist")
