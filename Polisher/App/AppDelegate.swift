@@ -64,6 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             historyManager: historyManager
         )
         globalHotKey.register()
+        GlobalHotKey.resetStaleAccessibility()
 
         let detector = APIKeyDetector()
         if settingsManager.claudeAPIKey.isEmpty, let key = detector.detectClaudeKey() {
