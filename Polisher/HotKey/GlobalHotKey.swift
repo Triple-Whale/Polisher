@@ -95,6 +95,27 @@ class GlobalHotKey {
         }
     }
 
+    static func resetStaleAccessibility() {
+        let defaultsKey = "didResetStaleAccessibility"
+        guard !AXIsProcessTrusted(), !UserDefaults.standard.bool(forKey: defaultsKey) else { return }
+        UserDefaults.standard.set(true, forKey: defaultsKey)
+        // An entry granted to a build signed with an older certificate stays switched on but no longer applies.
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        process.arguments = ["reset", "Accessibility", Bundle.main.bundleIdentifier ?? "com.triplewhale.polisher"]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            process.waitUntilExit()
+            LogManager.shared.log(.info, category: "Access", "Reset Accessibility entry (exit \(process.terminationStatus))")
+        } catch {
+            LogManager.shared.log(.error, category: "Access", "Could not reset Accessibility entry: \(error.localizedDescription)")
+        }
+        let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+    }
+
     private static func checkAccessibility() -> Bool {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
         let trusted = AXIsProcessTrustedWithOptions(

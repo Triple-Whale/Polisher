@@ -1,0 +1,1 @@
+Polisher now clears an Accessibility permission left over from an earlier version and asks for it again, so turning Polisher on in System Settings works the first time.
